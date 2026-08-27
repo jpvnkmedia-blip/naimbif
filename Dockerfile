@@ -1,9 +1,7 @@
-FROM php:8.3-fpm-alpine
+FROM php:8.3-cli-alpine
 
 # Pasang dependency sistem & PHP extensions
 RUN apk add --no-cache \
-    nginx \
-    supervisor \
     curl \
     libpng-dev \
     libxml2-dev \
@@ -47,20 +45,13 @@ RUN mkdir -p /var/www/storage/framework/cache/data \
              /var/www/storage/framework/views \
              /var/www/storage/logs \
              /var/www/database \
-    && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache /var/www/database \
     && chmod -R 777 /var/www/storage /var/www/bootstrap/cache /var/www/database
-
-# Konfigurasi Nginx
-COPY docker/nginx.conf /etc/nginx/http.d/default.conf
-
-# Konfigurasi Supervisor
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Salin script startup
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Port Cloud Run / Render (Port 8080 & 10000)
+# Port Cloud Run / Render
 EXPOSE 8080 10000 80
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
