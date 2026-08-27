@@ -1,0 +1,273 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Application;
+use App\Models\LivestockInventory;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class NaimbifApplicationTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed();
+    }
+
+    private function createTestApp(array $overrides = []): Application
+    {
+        $app = Application::create(array_merge([
+            'no_rujukan' => 'NB-2026-0001',
+            'nama' => 'Wan Muhammad Azlan',
+            'no_kp' => '850712035411',
+            'no_telefon' => '019-9112233',
+            'alamat_tetap' => 'Lot 1422, Kampung Sireh',
+            'poskod' => '15050',
+            'jajahan' => 'Kota Bharu',
+            'pengalaman_menternak' => 8,
+            'status_penternakan' => 'Sepenuh Masa',
+            'pernah_kursus' => true,
+            'nama_kursus' => 'Kursus Penternakan Lembu',
+            'anjuran_kursus' => 'JPVNK',
+            'alamat_ladang' => 'Lot 889, Mukim Kemumin',
+            'poskod_ladang' => '16100',
+            'jajahan_ladang' => 'Kota Bharu',
+            'gps_longitud' => '102.291240',
+            'gps_latitud' => '6.158420',
+            'status_tanah' => 'Sendiri',
+            'keluasan_tanah' => 7.50,
+            'padang_ragut' => 'Ada',
+            'bilangan_pekerja' => 3,
+            'punca_ternakan' => 'Beli',
+            'kaedah_pembiakan' => 'Permanian Beradas',
+            'pengakuan_benar' => true,
+            'tarikh_permohonan' => date('Y-m-d'),
+            'status_kelengkapan' => 'Dalam Semakan',
+            'syor_permohonan' => 'Belum Disemak',
+            'status_negeri' => 'Menunggu Kelulusan',
+            'status_permohonan' => 'Dihantar',
+        ], $overrides));
+
+        LivestockInventory::create([
+            'application_id' => $app->id,
+            'baka' => 'CHAROLAIS',
+            'betina_anak' => 2,
+            'betina_dara' => 2,
+            'betina_induk' => 5,
+            'jantan_anak' => 1,
+            'jantan_pejantan' => 1,
+            'jumlah_baka' => 11,
+        ]);
+
+        return $app;
+    }
+
+    public function test_home_page_loads_successfully()
+    {
+        $response = $this->get(route('public.home'));
+        $response->assertStatus(200);
+        $response->assertSee('Program Ladang Bridlot');
+        $response->assertSee('NAIMbif Kelantan');
+    }
+
+    public function test_apply_form_page_loads_successfully()
+    {
+        $response = $this->get(route('public.apply'));
+        $response->assertStatus(200);
+        $response->assertSee('BORANG PERMOHONAN PENYERTAAN LADANG BRIDLOT NAIMbif');
+        $response->assertSee('MAKLUMAT PESERTA');
+        $response->assertSee('STOK TERNAKAN');
+    }
+
+    public function test_applicant_can_submit_new_application()
+    {
+        $payload = [
+            'nama' => 'Ahmad Daniel bin Rosli',
+            'no_kp' => '900101035677',
+            'no_telefon' => '012-3456789',
+            'alamat_tetap' => 'No 12, Jalan Pasir Puteh',
+            'poskod' => '16800',
+            'jajahan' => 'Pasir Puteh',
+            'pengalaman_menternak' => 5,
+            'status_penternakan' => 'Sepenuh Masa',
+            'pernah_kursus' => '1',
+            'nama_kursus' => 'Kursus Penternakan Bridlot Lembu',
+            'anjuran_kursus' => 'JPV Kelantan',
+            'alamat_ladang' => 'Lot 102, Kg Wakaf Berangan, Pasir Puteh',
+            'poskod_ladang' => '16800',
+            'jajahan_ladang' => 'Pasir Puteh',
+            'gps_longitud' => '102.401200',
+            'gps_latitud' => '5.834100',
+            'status_tanah' => 'Sendiri',
+            'keluasan_tanah' => 5.5,
+            'padang_ragut' => 'Ada',
+            'bilangan_pekerja' => 2,
+            'punca_ternakan' => 'Beli',
+            'kaedah_pembiakan' => 'Permanian Beradas',
+            'pengakuan_benar' => '1',
+            'tarikh_permohonan' => date('Y-m-d'),
+            'stok' => [
+                'CHAROLAIS' => [
+                    'betina_anak' => 2,
+                    'betina_dara' => 3,
+                    'betina_induk' => 5,
+                    'jantan_anak' => 1,
+                    'jantan_pejantan' => 1,
+                ],
+                'BELGIAN BLUE' => [
+                    'betina_anak' => 0,
+                    'betina_dara' => 0,
+                    'betina_induk' => 0,
+                    'jantan_anak' => 0,
+                    'jantan_pejantan' => 0,
+                ],
+                "BLONDE D'AQUITAINE" => [
+                    'betina_anak' => 0,
+                    'betina_dara' => 0,
+                    'betina_induk' => 0,
+                    'jantan_anak' => 0,
+                    'jantan_pejantan' => 0,
+                ],
+                'LIMOUSIN' => [
+                    'betina_anak' => 1,
+                    'betina_dara' => 2,
+                    'betina_induk' => 3,
+                    'jantan_anak' => 0,
+                    'jantan_pejantan' => 1,
+                ],
+                'KEDAH KELANTAN' => [
+                    'betina_anak' => 5,
+                    'betina_dara' => 5,
+                    'betina_induk' => 10,
+                    'jantan_anak' => 2,
+                    'jantan_pejantan' => 2,
+                ],
+                'LAIN-LAIN' => [
+                    'nama_baka_lain' => 'Brahman',
+                    'betina_anak' => 0,
+                    'betina_dara' => 0,
+                    'betina_induk' => 0,
+                    'jantan_anak' => 0,
+                    'jantan_pejantan' => 0,
+                ],
+            ],
+        ];
+
+        $response = $this->post(route('public.store'), $payload);
+
+        $this->assertDatabaseHas('applications', [
+            'nama' => 'AHMAD DANIEL BIN ROSLI',
+            'no_kp' => '900101035677',
+            'jajahan' => 'Pasir Puteh',
+        ]);
+
+        $app = Application::where('no_kp', '900101035677')->first();
+        $this->assertNotNull($app);
+
+        $response->assertRedirect(route('public.success', $app->no_rujukan));
+    }
+
+    public function test_applicant_can_check_status_via_ic_or_ref()
+    {
+        $app = $this->createTestApp();
+
+        // Search by IC
+        $response = $this->get(route('public.check_status', ['carian' => $app->no_kp]));
+        $response->assertStatus(200);
+        $response->assertSee($app->nama);
+        $response->assertSee($app->no_rujukan);
+
+        // Search by Ref No
+        $response2 = $this->get(route('public.check_status', ['carian' => $app->no_rujukan]));
+        $response2->assertStatus(200);
+        $response2->assertSee($app->nama);
+    }
+
+    public function test_official_print_form_renders_authentic_layout()
+    {
+        $app = $this->createTestApp();
+
+        $response = $this->get(route('public.print', $app->no_rujukan));
+        $response->assertStatus(200);
+        $response->assertSee('BORANG PERMOHONAN PENYERTAAN LADANG BRIDLOT NAIMbif');
+        $response->assertSee('MAKLUMAT PESERTA');
+        $response->assertSee('UNTUK KEGUNAAN PEJABAT (JAJAHAN)');
+        $response->assertSee('ULASAN NEGERI');
+        $response->assertSee($app->nama);
+    }
+
+    public function test_officer_can_login_and_access_dashboard()
+    {
+        $user = User::where('email', 'kb@jpvnk.gov.my')->first();
+
+        $loginResponse = $this->post(route('login'), [
+            'email' => 'kb@jpvnk.gov.my',
+            'password' => 'password',
+        ]);
+
+        $loginResponse->assertRedirect(route('admin.dashboard'));
+        $this->assertAuthenticatedAs($user);
+
+        $dashboardResponse = $this->get(route('admin.dashboard'));
+        $dashboardResponse->assertStatus(200);
+        $dashboardResponse->assertSee('Dashboard Analitik NAIMbif');
+    }
+
+    public function test_jajahan_officer_can_update_inspection_and_premise_id()
+    {
+        $user = User::where('email', 'kb@jpvnk.gov.my')->first();
+        $app = $this->createTestApp();
+
+        $response = $this->actingAs($user)->post(route('admin.applications.update_jajahan', $app->id), [
+            'id_premis' => 'JPV/KB/BL/2026/099',
+            'status_kelengkapan' => 'Lengkap',
+            'syor_permohonan' => 'Disokong',
+            'pegawai_penyiasat' => 'En. Mohd Ridzuan bin Abdullah',
+            'tarikh_siasatan' => date('Y-m-d'),
+            'catatan_jajahan' => 'Premis lengkap dan menepati piawaian.',
+        ]);
+
+        $response->assertRedirect(route('admin.applications.show', $app->id));
+
+        $this->assertDatabaseHas('applications', [
+            'id' => $app->id,
+            'id_premis' => 'JPV/KB/BL/2026/099',
+            'status_kelengkapan' => 'Lengkap',
+            'syor_permohonan' => 'Disokong',
+        ]);
+    }
+
+    public function test_state_officer_can_approve_application()
+    {
+        $user = User::where('email', 'negeri@jpvnk.gov.my')->first();
+        $app = $this->createTestApp();
+
+        $response = $this->actingAs($user)->post(route('admin.applications.update_negeri', $app->id), [
+            'status_negeri' => 'Lulus',
+            'no_rujukan_negeri' => 'JPVNK/BRIDLOT/2026/TEST01',
+            'pegawai_pelulus' => 'Dr. Ahmad Farhan bin Ismail',
+            'ulasan_negeri' => 'Diluluskan untuk menerima bantuan pakej baka.',
+        ]);
+
+        $response->assertRedirect(route('admin.applications.show', $app->id));
+
+        $this->assertDatabaseHas('applications', [
+            'id' => $app->id,
+            'status_negeri' => 'Lulus',
+            'no_rujukan_negeri' => 'JPVNK/BRIDLOT/2026/TEST01',
+        ]);
+    }
+
+    public function test_admin_can_export_applications_to_csv()
+    {
+        $user = User::where('email', 'admin@jpvnk.gov.my')->first();
+
+        $response = $this->actingAs($user)->get(route('admin.applications.export'));
+        $response->assertStatus(200);
+        $this->assertTrue(str_contains($response->headers->get('content-type'), 'text/csv'));
+    }
+}
