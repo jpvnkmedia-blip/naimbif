@@ -24,24 +24,43 @@ WORKDIR /var/www
 # Salin fail kod aplikasi
 COPY . .
 
+# Set default Environment Variables
+ENV APP_NAME="NAIMbif - Ladang Bridlot" \
+    APP_ENV=production \
+    APP_DEBUG=true \
+    APP_KEY="base64:YVfDpakeFLsXPGzPjwyH3UWbwglTFLrImnnWFwhiZ60=" \
+    APP_TIMEZONE="Asia/Kuala_Lumpur" \
+    APP_LOCALE="ms" \
+    DB_CONNECTION=sqlite \
+    DB_DATABASE=/var/www/database/database.sqlite \
+    SESSION_DRIVER=file \
+    CACHE_STORE=file \
+    QUEUE_CONNECTION=sync \
+    LOG_CHANNEL=stderr
+
 # Pasang dependensi PHP tanpa dev
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
-# Konfigurasi perizinan folder storage dan cache
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+# Konfigurasi perizinan folder storage, bootstrap cache, dan database
+RUN mkdir -p /var/www/storage/framework/cache/data \
+             /var/www/storage/framework/sessions \
+             /var/www/storage/framework/views \
+             /var/www/storage/logs \
+             /var/www/database \
+    && chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache /var/www/database \
+    && chmod -R 777 /var/www/storage /var/www/bootstrap/cache /var/www/database
 
 # Konfigurasi Nginx
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 
-# Konfigurasi Supervisor untuk jalankan Nginx & PHP-FPM serentak
+# Konfigurasi Supervisor
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Salin script startup untuk automigrate SQLite
+# Salin script startup
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Port Cloud Run (Default 8080)
-EXPOSE 8080
+# Port Cloud Run / Render (Port 8080 & 10000)
+EXPOSE 8080 10000 80
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
