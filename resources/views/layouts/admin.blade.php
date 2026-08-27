@@ -113,6 +113,13 @@
                     </div>
                 </a>
 
+                @if(Auth::user() && Auth::user()->isAdmin())
+                    <a href="{{ route('admin.users.index') }}" class="flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all {{ request()->routeIs('admin.users.*') ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25 font-semibold' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                        <i class="fas fa-users-cog w-6 text-base"></i>
+                        <span>Pengurusan Pegawai</span>
+                    </a>
+                @endif
+
                 <div class="pt-4 mt-4 border-t border-slate-800">
                     <p class="px-4 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Pautan Awam</p>
                     <a href="{{ route('public.home') }}" target="_blank" class="flex items-center px-4 py-2.5 text-xs font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white">

@@ -55,6 +55,12 @@
             <button type="submit" class="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md shadow-emerald-600/25 transition-all">
                 <i class="fas fa-sign-in-alt mr-2 mt-0.5"></i> Log Masuk Sistem
             </button>
+
+            <div class="pt-2 text-center">
+                <a href="{{ route('register') }}" class="w-full inline-flex items-center justify-center py-2.5 px-4 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-colors">
+                    <i class="fas fa-user-plus mr-2 text-emerald-600"></i> Daftar Akaun Pegawai Baharu
+                </a>
+            </div>
         </form>
 
         <!-- Demo Accounts Quick Fill Chips -->

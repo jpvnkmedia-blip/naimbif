@@ -23,11 +23,13 @@ Route::get('/cetak/{no_rujukan}', [PublicApplicationController::class, 'printFor
 
 /*
 |--------------------------------------------------------------------------
-| Authentication Routes (Log Masuk Pegawai)
+| Authentication Routes (Log Masuk & Pendaftaran Pegawai)
 |--------------------------------------------------------------------------
 */
 Route::get('/login', [AuthController::class, 'loginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/register', [AuthController::class, 'registerForm'])->name('register');
+Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 /*
@@ -51,4 +53,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/notifikasi/terkini', [\App\Http\Controllers\Admin\NotificationController::class, 'getLatest'])->name('notifications.latest');
     Route::get('/notifikasi/{id}', [\App\Http\Controllers\Admin\NotificationController::class, 'markAsRead'])->name('notifications.show');
     Route::post('/notifikasi/baca-semua', [\App\Http\Controllers\Admin\NotificationController::class, 'markAllAsRead'])->name('notifications.mark_all');
+
+    // Pengurusan Akaun Pegawai (Admin / Pentadbir)
+    Route::get('/pegawai', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
+    Route::post('/pegawai', [\App\Http\Controllers\Admin\UserController::class, 'store'])->name('users.store');
+    Route::put('/pegawai/{id}', [\App\Http\Controllers\Admin\UserController::class, 'update'])->name('users.update');
+    Route::delete('/pegawai/{id}', [\App\Http\Controllers\Admin\UserController::class, 'destroy'])->name('users.destroy');
 });

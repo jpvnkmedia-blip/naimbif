@@ -435,5 +435,85 @@ class NaimbifApplicationTest extends TestCase
             'notifications',
         ]);
     }
+
+    public function test_officer_can_view_registration_form()
+    {
+        $response = $this->get(route('register'));
+        $response->assertStatus(200);
+        $response->assertSee('Daftar Akaun Pegawai');
+        $response->assertSee('Alamat E-mel Rasmi');
+    }
+
+    public function test_officer_can_register_new_account()
+    {
+        $payload = [
+            'name' => 'Dr. Wan Mohd Hafiz bin Wan Harun',
+            'email' => 'hafiz.harun@jpvnk.gov.my',
+            'jawatan' => 'Pegawai Veterinar GV44',
+            'no_telefon' => '019-9112233',
+            'role' => 'pegawai_jajahan',
+            'jajahan' => 'Bachok',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ];
+
+        $response = $this->post(route('register'), $payload);
+        $response->assertRedirect(route('admin.dashboard'));
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'hafiz.harun@jpvnk.gov.my',
+            'jajahan' => 'Bachok',
+            'role' => 'pegawai_jajahan',
+        ]);
+    }
+
+    public function test_admin_can_view_and_manage_officers()
+    {
+        $admin = User::where('email', 'admin@jpvnk.gov.my')->first();
+
+        $response = $this->actingAs($admin)->get(route('admin.users.index'));
+        $response->assertStatus(200);
+        $response->assertSee('Pengurusan Akaun Pegawai');
+
+        // Admin create new officer directly
+        $createResponse = $this->actingAs($admin)->post(route('admin.users.store'), [
+            'name' => 'Pn. Halimah binti Kassim',
+            'email' => 'halimah@jpvnk.gov.my',
+            'jawatan' => 'Pembantu Veterinar G19',
+            'no_telefon' => '012-3456789',
+            'role' => 'pegawai_jajahan',
+            'jajahan' => 'Tumpat',
+            'password' => 'password',
+        ]);
+        $createResponse->assertRedirect(route('admin.users.index'));
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'halimah@jpvnk.gov.my',
+            'jajahan' => 'Tumpat',
+        ]);
+    }
+
+    public function test_admin_can_update_officer_details()
+    {
+        $admin = User::where('email', 'admin@jpvnk.gov.my')->first();
+        $targetUser = User::where('email', 'kb@jpvnk.gov.my')->first();
+
+        $response = $this->actingAs($admin)->put(route('admin.users.update', $targetUser->id), [
+            'name' => 'En. Mohd Ridzuan bin Abdullah (Senior)',
+            'email' => $targetUser->email,
+            'jawatan' => 'Ketua Pegawai Veterinar Jajahan',
+            'no_telefon' => '019-9876543',
+            'role' => 'pegawai_jajahan',
+            'jajahan' => 'Kota Bharu',
+        ]);
+
+        $response->assertRedirect(route('admin.users.index'));
+
+        $this->assertDatabaseHas('users', [
+            'id' => $targetUser->id,
+            'name' => 'En. Mohd Ridzuan bin Abdullah (Senior)',
+            'jawatan' => 'Ketua Pegawai Veterinar Jajahan',
+        ]);
+    }
 }
 
