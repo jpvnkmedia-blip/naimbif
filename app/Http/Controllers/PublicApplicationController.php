@@ -218,7 +218,7 @@ class PublicApplicationController extends Controller
     }
 
     /**
-     * Pengesahan Keselamatan Identiti Pemohon (Security Challenge)
+     * Pengesahan Keselamatan Dwi-Faktor Pemohon (2FA: No. KP + No. Telefon)
      */
     public function verifyEdit(Request $request, $no_rujukan)
     {
@@ -226,15 +226,32 @@ class PublicApplicationController extends Controller
 
         $request->validate([
             'no_kp' => 'required|string',
+            'no_telefon' => 'required|string',
         ], [
-            'no_kp.required' => 'Sila masukkan No. Kad Pengenalan pemohon untuk pengesahan keselamatan.',
+            'no_kp.required' => 'Sila masukkan No. Kad Pengenalan pemohon.',
+            'no_telefon.required' => 'Sila masukkan No. Telefon atau 4 digit terakhir no. telefon pemohon.',
         ]);
 
         $inputIc = preg_replace('/[^0-9]/', '', $request->no_kp);
+        $inputPhone = preg_replace('/[^0-9]/', '', $request->no_telefon);
+        $appPhone = preg_replace('/[^0-9]/', '', $application->no_telefon);
 
-        if ($inputIc !== $application->no_kp) {
+        // Semak No. KP
+        $icMatched = ($inputIc === $application->no_kp);
+
+        // Semak No. Telefon (Nombor Penuh ATAU 4 Digit Terakhir)
+        $phoneMatched = false;
+        if (!empty($inputPhone) && !empty($appPhone)) {
+            if ($inputPhone === $appPhone) {
+                $phoneMatched = true;
+            } elseif (strlen($inputPhone) >= 4 && str_ends_with($appPhone, $inputPhone)) {
+                $phoneMatched = true;
+            }
+        }
+
+        if (!$icMatched || !$phoneMatched) {
             return redirect()->back()
-                ->with('error', 'Pengesahan Gagal: No. Kad Pengenalan tidak sepadan dengan rekod permohonan ' . $no_rujukan . '. Akses disekat demi keselamatan.')
+                ->with('error', 'Pengesahan Dwi-Faktor Gagal: Padanan No. Kad Pengenalan atau No. Telefon tidak tepat. Akses disekat demi keselamatan peribadi penternak.')
                 ->withInput();
         }
 
@@ -242,7 +259,7 @@ class PublicApplicationController extends Controller
         session(["verified_applicant_{$application->no_rujukan}" => $application->no_kp]);
 
         return redirect()->route('public.edit', $application->no_rujukan)
-            ->with('success', 'Pengesahan identiti pemohon berjaya. Anda kini boleh mengemas kini maklumat.');
+            ->with('success', 'Pengesahan dwi-faktor berjaya. Anda kini boleh mengemas kini maklumat permohonan.');
     }
 
     /**

@@ -271,29 +271,48 @@ class NaimbifApplicationTest extends TestCase
         $this->assertTrue(str_contains($response->headers->get('content-type'), 'text/csv'));
     }
 
-    public function test_applicant_must_verify_ic_to_access_edit_form()
+    public function test_applicant_must_verify_2fa_to_access_edit_form()
     {
         $app = $this->createTestApp();
 
         // 1. Direct access without session verification triggers security challenge
         $response = $this->get(route('public.edit', $app->no_rujukan));
         $response->assertStatus(200);
-        $response->assertSee('Pengesahan Keselamatan Pemohon');
+        $response->assertSee('Pengesahan Keselamatan Dwi-Faktor');
         $response->assertSee('No. Kad Pengenalan Pemohon');
+        $response->assertSee('No. Telefon');
 
-        // 2. Submit wrong IC -> rejected
+        // 2. Submit wrong IC + correct Phone -> rejected
         $wrongIcResponse = $this->post(route('public.verify_edit', $app->no_rujukan), [
             'no_kp' => '999999999999',
+            'no_telefon' => $app->no_telefon,
         ]);
         $wrongIcResponse->assertSessionHas('error');
 
-        // 3. Submit correct IC -> approved and redirected to edit form
-        $correctIcResponse = $this->post(route('public.verify_edit', $app->no_rujukan), [
+        // 3. Submit correct IC + wrong Phone -> rejected
+        $wrongPhoneResponse = $this->post(route('public.verify_edit', $app->no_rujukan), [
             'no_kp' => $app->no_kp,
+            'no_telefon' => '012-0000000',
         ]);
-        $correctIcResponse->assertRedirect(route('public.edit', $app->no_rujukan));
+        $wrongPhoneResponse->assertSessionHas('error');
 
-        // 4. Now with verified session, edit form is accessible
+        // 4. Submit correct IC + correct full Phone -> approved
+        $correctResponse = $this->post(route('public.verify_edit', $app->no_rujukan), [
+            'no_kp' => $app->no_kp,
+            'no_telefon' => $app->no_telefon,
+        ]);
+        $correctResponse->assertRedirect(route('public.edit', $app->no_rujukan));
+
+        // 5. Submit correct IC + correct last 4 digits of Phone -> approved
+        $cleanPhone = preg_replace('/[^0-9]/', '', $app->no_telefon);
+        $last4 = substr($cleanPhone, -4);
+        $correct4DigitResponse = $this->post(route('public.verify_edit', $app->no_rujukan), [
+            'no_kp' => $app->no_kp,
+            'no_telefon' => $last4,
+        ]);
+        $correct4DigitResponse->assertRedirect(route('public.edit', $app->no_rujukan));
+
+        // 6. Now with verified session, edit form is accessible
         $editFormResponse = $this->withSession(["verified_applicant_{$app->no_rujukan}" => $app->no_kp])
             ->get(route('public.edit', $app->no_rujukan));
         $editFormResponse->assertStatus(200);
