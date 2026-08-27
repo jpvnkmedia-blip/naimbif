@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [PublicApplicationController::class, 'index'])->name('public.home');
 Route::get('/permohonan', [PublicApplicationController::class, 'create'])->name('public.apply');
 Route::post('/permohonan/simpan', [PublicApplicationController::class, 'store'])->name('public.store');
+Route::get('/permohonan/kemaskini/{no_rujukan}', [PublicApplicationController::class, 'edit'])->name('public.edit');
+Route::put('/permohonan/kemaskini/{no_rujukan}', [PublicApplicationController::class, 'update'])->name('public.update');
 Route::get('/permohonan/berjaya/{no_rujukan}', [PublicApplicationController::class, 'success'])->name('public.success');
 Route::match(['get', 'post'], '/semakan', [PublicApplicationController::class, 'checkStatus'])->name('public.check_status');
 Route::get('/cetak/{no_rujukan}', [PublicApplicationController::class, 'printForm'])->name('public.print');

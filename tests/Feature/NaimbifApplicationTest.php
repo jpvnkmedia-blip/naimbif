@@ -270,4 +270,70 @@ class NaimbifApplicationTest extends TestCase
         $response->assertStatus(200);
         $this->assertTrue(str_contains($response->headers->get('content-type'), 'text/csv'));
     }
+
+    public function test_applicant_can_access_edit_form()
+    {
+        $app = $this->createTestApp();
+
+        $response = $this->get(route('public.edit', $app->no_rujukan));
+        $response->assertStatus(200);
+        $response->assertSee($app->nama);
+        $response->assertSee($app->no_rujukan);
+        $response->assertSee('SIMPAN PERUBAHAN PERMOHONAN');
+    }
+
+    public function test_applicant_can_update_application_data()
+    {
+        $app = $this->createTestApp();
+
+        $updatePayload = [
+            'nama' => 'NIK MOHD AZLAN BIN NIK OTHMAN (KEMASKINI)',
+            'no_kp' => $app->no_kp,
+            'no_telefon' => '019-9998888',
+            'alamat_tetap' => 'PT 999 Kampung Tok Uban',
+            'poskod' => '17000',
+            'jajahan' => 'Pasir Mas',
+            'pengalaman_menternak' => 8,
+            'status_penternakan' => 'Sepenuh Masa',
+            'pernah_kursus' => '1',
+            'nama_kursus' => 'Kursus Lanjutan Bridlot',
+            'anjuran_kursus' => 'JPVNK',
+            'status_tanah' => 'Sendiri',
+            'keluasan_tanah' => 5.5,
+            'padang_ragut' => 'Ada',
+            'bilangan_pekerja' => 3,
+            'punca_ternakan' => 'Beli',
+            'kaedah_pembiakan' => 'Permanian Beradas',
+            'stok' => [
+                'CHAROLAIS' => [
+                    'betina_anak' => 2,
+                    'betina_dara' => 3,
+                    'betina_induk' => 5,
+                    'jantan_anak' => 1,
+                    'jantan_pejantan' => 2,
+                ],
+            ],
+        ];
+
+        $response = $this->put(route('public.update', $app->no_rujukan), $updatePayload);
+
+        $response->assertRedirect(route('public.check_status', ['carian' => $app->no_rujukan]));
+
+        $this->assertDatabaseHas('applications', [
+            'id' => $app->id,
+            'nama' => 'NIK MOHD AZLAN BIN NIK OTHMAN (KEMASKINI)',
+            'no_telefon' => '019-9998888',
+            'keluasan_tanah' => 5.5,
+        ]);
+    }
+
+    public function test_approved_application_cannot_be_edited()
+    {
+        $app = $this->createTestApp();
+        $app->update(['status_negeri' => 'Lulus']);
+
+        $response = $this->get(route('public.edit', $app->no_rujukan));
+        $response->assertRedirect(route('public.check_status', ['carian' => $app->no_rujukan]));
+    }
 }
+

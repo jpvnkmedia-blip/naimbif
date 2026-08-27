@@ -180,8 +180,19 @@
                         </div>
                     </div>
 
-                    <!-- Print Button -->
-                    <div class="pt-4 flex justify-end">
+                    <!-- Actions (Edit & Print) -->
+                    <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100">
+                        <div>
+                            @if($application->status_negeri !== 'Lulus')
+                                <a href="{{ route('public.edit', $application->no_rujukan) }}"
+                                   class="inline-flex items-center px-5 py-3 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 transition-colors shadow-sm">
+                                    <i class="fas fa-edit mr-2 text-emerald-600"></i> Kemas Kini / Ubah Maklumat Permohonan
+                                </a>
+                            @else
+                                <span class="text-xs text-slate-400 italic"><i class="fas fa-lock mr-1"></i> Permohonan telah diluluskan rasmi. Sila hubungi Pejabat Jajahan untuk sebarang pindaan.</span>
+                            @endif
+                        </div>
+
                         <a href="{{ route('public.print', $application->no_rujukan) }}" target="_blank"
                            class="inline-flex items-center px-6 py-3 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 transition-colors shadow-md">
                             <i class="fas fa-print mr-2 text-amber-400"></i> Cetak / Salinan Borang Rasmi PDF (A4)

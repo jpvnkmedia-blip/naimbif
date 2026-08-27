@@ -60,14 +60,18 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+                <a href="{{ route('public.edit', $application->no_rujukan) }}"
+                   class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 transition-colors">
+                    <i class="fas fa-edit mr-2 text-emerald-600"></i> Ubah / Kemas Kini Maklumat
+                </a>
                 <a href="{{ route('public.print', $application->no_rujukan) }}" target="_blank"
-                   class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-md transition-colors">
-                    <i class="fas fa-print mr-2 text-amber-400"></i> Cetak / Salinan Borang Rasmi PDF
+                   class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-md transition-colors">
+                    <i class="fas fa-print mr-2 text-amber-400"></i> Cetak Salinan Borang (PDF)
                 </a>
                 <a href="{{ route('public.check_status', ['carian' => $application->no_rujukan]) }}"
-                   class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 rounded-xl text-sm font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 transition-colors">
-                    <i class="fas fa-search mr-2"></i> Semak Status Terkini
+                   class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-colors">
+                    <i class="fas fa-search mr-2"></i> Semak Status
                 </a>
             </div>
 

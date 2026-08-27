@@ -211,6 +211,175 @@ class PublicApplicationController extends Controller
     }
 
     /**
+     * Paparan Borang Kemaskini Permohonan Pemohon
+     */
+    public function edit($no_rujukan)
+    {
+        $application = Application::with('livestockInventories')
+            ->where('no_rujukan', $no_rujukan)
+            ->firstOrFail();
+
+        // Semak jika permohonan sudah diluluskan
+        if ($application->status_negeri === 'Lulus') {
+            return redirect()->route('public.check_status', ['carian' => $application->no_rujukan])
+                ->with('error', 'Permohonan ini telah diluluskan rasmi oleh Jabatan dan tidak boleh dikemas kini secara dalam talian. Sila hubungi Pejabat Veterinar Jajahan jika terdapat pindaan.');
+        }
+
+        $jajahans = Application::JAJAHAN_LIST;
+        $bakas = Application::BAKA_LIST;
+
+        $inventories = [];
+        foreach ($application->livestockInventories as $inv) {
+            $inventories[$inv->baka] = $inv;
+        }
+
+        return view('public.edit', compact('application', 'jajahans', 'bakas', 'inventories'));
+    }
+
+    /**
+     * Kemaskini Permohonan Pemohon
+     */
+    public function update(Request $request, $no_rujukan)
+    {
+        $application = Application::where('no_rujukan', $no_rujukan)->firstOrFail();
+
+        if ($application->status_negeri === 'Lulus') {
+            return redirect()->route('public.check_status', ['carian' => $application->no_rujukan])
+                ->with('error', 'Permohonan ini telah diluluskan rasmi oleh Jabatan dan tidak boleh dikemas kini.');
+        }
+
+        $rules = [
+            // Maklumat Peserta
+            'nama' => 'required|string|max:255',
+            'no_kp' => 'required|string|max:20',
+            'no_telefon' => 'required|string|max:30',
+            'alamat_tetap' => 'required|string',
+            'poskod' => 'required|string|max:10',
+            'jajahan' => 'required|string|in:' . implode(',', Application::JAJAHAN_LIST),
+            'pengalaman_menternak' => 'required|integer|min:0|max:80',
+            'status_penternakan' => 'required|string|in:Sepenuh Masa,Sampingan',
+            'pernah_kursus' => 'required|in:1,0',
+            'nama_kursus' => 'nullable|required_if:pernah_kursus,1|string|max:255',
+            'anjuran_kursus' => 'nullable|required_if:pernah_kursus,1|string|max:255',
+            'berminat_kursus_jpvnk' => 'nullable|in:1,0',
+
+            // Maklumat Ladang
+            'alamat_ladang' => 'nullable|string',
+            'poskod_ladang' => 'nullable|string|max:10',
+            'jajahan_ladang' => 'nullable|string|in:' . implode(',', Application::JAJAHAN_LIST),
+            'gps_longitud' => 'nullable|string|max:50',
+            'gps_latitud' => 'nullable|string|max:50',
+            'status_tanah' => 'required|string|in:Sendiri,Sewa,Kerajaan,Lain-lain',
+            'status_tanah_lain' => 'nullable|required_if:status_tanah,Lain-lain|string|max:255',
+            'keluasan_tanah' => 'required|numeric|min:0.1',
+            'padang_ragut' => 'required|string|in:Ada,Tiada',
+            'bilangan_pekerja' => 'required|integer|min:0',
+
+            // Maklumat Ternakan
+            'punca_ternakan' => 'required|string|in:Beli,Pawah,Lain-lain',
+            'punca_ternakan_lain' => 'nullable|required_if:punca_ternakan,Lain-lain|string|max:255',
+            'kaedah_pembiakan' => 'required|string|in:Asli,Permanian Beradas',
+
+            // Stok Ternakan (Array)
+            'stok' => 'required|array',
+        ];
+
+        $messages = [
+            'nama.required' => 'Sila masukkan Nama Pemohon.',
+            'no_kp.required' => 'Sila masukkan No. Kad Pengenalan.',
+            'no_telefon.required' => 'Sila masukkan No. Telefon.',
+            'alamat_tetap.required' => 'Sila masukkan Alamat Tetap.',
+            'poskod.required' => 'Sila masukkan Poskod.',
+            'jajahan.required' => 'Sila pilih Jajahan.',
+            'keluasan_tanah.required' => 'Sila masukkan Keluasan Tanah (Ekar).',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $updateData = [
+                'nama' => strtoupper(trim($request->nama)),
+                'no_kp' => preg_replace('/[^0-9]/', '', $request->no_kp),
+                'no_telefon' => trim($request->no_telefon),
+                'alamat_tetap' => trim($request->alamat_tetap),
+                'poskod' => trim($request->poskod),
+                'jajahan' => $request->jajahan,
+                'pengalaman_menternak' => (int) $request->pengalaman_menternak,
+                'status_penternakan' => $request->status_penternakan,
+                'pernah_kursus' => (bool) $request->pernah_kursus,
+                'nama_kursus' => $request->pernah_kursus ? $request->nama_kursus : null,
+                'anjuran_kursus' => $request->pernah_kursus ? $request->anjuran_kursus : null,
+                'berminat_kursus_jpvnk' => !$request->pernah_kursus ? (bool) $request->berminat_kursus_jpvnk : null,
+
+                'alamat_ladang' => $request->alamat_ladang ?: $request->alamat_tetap,
+                'poskod_ladang' => $request->poskod_ladang ?: $request->poskod,
+                'jajahan_ladang' => $request->jajahan_ladang ?: $request->jajahan,
+                'gps_longitud' => $request->gps_longitud,
+                'gps_latitud' => $request->gps_latitud,
+                'status_tanah' => $request->status_tanah,
+                'status_tanah_lain' => $request->status_tanah === 'Lain-lain' ? $request->status_tanah_lain : null,
+                'keluasan_tanah' => $request->keluasan_tanah,
+                'padang_ragut' => $request->padang_ragut,
+                'bilangan_pekerja' => (int) $request->bilangan_pekerja,
+
+                'punca_ternakan' => $request->punca_ternakan,
+                'punca_ternakan_lain' => $request->punca_ternakan === 'Lain-lain' ? $request->punca_ternakan_lain : null,
+                'kaedah_pembiakan' => $request->kaedah_pembiakan,
+            ];
+
+            if ($request->filled('tandatangan')) {
+                $updateData['tandatangan'] = $request->tandatangan;
+            }
+
+            $application->update($updateData);
+
+            // Re-create livestock inventories
+            $application->livestockInventories()->delete();
+
+            if (is_array($request->stok)) {
+                foreach ($request->stok as $baka => $data) {
+                    $bAnak = (int) ($data['betina_anak'] ?? 0);
+                    $bDara = (int) ($data['betina_dara'] ?? 0);
+                    $bInduk = (int) ($data['betina_induk'] ?? 0);
+                    $jAnak = (int) ($data['jantan_anak'] ?? 0);
+                    $jPejantan = (int) ($data['jantan_pejantan'] ?? 0);
+                    $total = $bAnak + $bDara + $bInduk + $jAnak + $jPejantan;
+
+                    LivestockInventory::create([
+                        'application_id' => $application->id,
+                        'baka' => $baka,
+                        'nama_baka_lain' => $baka === 'LAIN-LAIN' ? ($data['nama_baka_lain'] ?? null) : null,
+                        'betina_anak' => $bAnak,
+                        'betina_dara' => $bDara,
+                        'betina_induk' => $bInduk,
+                        'jantan_anak' => $jAnak,
+                        'jantan_pejantan' => $jPejantan,
+                        'jumlah_baka' => $total,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('public.check_status', ['carian' => $application->no_rujukan])
+                ->with('success', 'Maklumat permohonan ' . $application->no_rujukan . ' telah berjaya dikemas kini.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Ralat semasa mengemas kini permohonan: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    /**
      * Paparan Borang Rasmi PDF / Cetakan A4 (Salinan Borang Asal JPVNK)
      */
     public function printForm($no_rujukan)
