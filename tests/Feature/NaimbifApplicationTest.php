@@ -271,15 +271,34 @@ class NaimbifApplicationTest extends TestCase
         $this->assertTrue(str_contains($response->headers->get('content-type'), 'text/csv'));
     }
 
-    public function test_applicant_can_access_edit_form()
+    public function test_applicant_must_verify_ic_to_access_edit_form()
     {
         $app = $this->createTestApp();
 
+        // 1. Direct access without session verification triggers security challenge
         $response = $this->get(route('public.edit', $app->no_rujukan));
         $response->assertStatus(200);
-        $response->assertSee($app->nama);
-        $response->assertSee($app->no_rujukan);
-        $response->assertSee('SIMPAN PERUBAHAN PERMOHONAN');
+        $response->assertSee('Pengesahan Keselamatan Pemohon');
+        $response->assertSee('No. Kad Pengenalan Pemohon');
+
+        // 2. Submit wrong IC -> rejected
+        $wrongIcResponse = $this->post(route('public.verify_edit', $app->no_rujukan), [
+            'no_kp' => '999999999999',
+        ]);
+        $wrongIcResponse->assertSessionHas('error');
+
+        // 3. Submit correct IC -> approved and redirected to edit form
+        $correctIcResponse = $this->post(route('public.verify_edit', $app->no_rujukan), [
+            'no_kp' => $app->no_kp,
+        ]);
+        $correctIcResponse->assertRedirect(route('public.edit', $app->no_rujukan));
+
+        // 4. Now with verified session, edit form is accessible
+        $editFormResponse = $this->withSession(["verified_applicant_{$app->no_rujukan}" => $app->no_kp])
+            ->get(route('public.edit', $app->no_rujukan));
+        $editFormResponse->assertStatus(200);
+        $editFormResponse->assertSee('SIMPAN PERUBAHAN PERMOHONAN');
+        $editFormResponse->assertSee($app->nama);
     }
 
     public function test_applicant_can_update_application_data()
@@ -315,7 +334,8 @@ class NaimbifApplicationTest extends TestCase
             ],
         ];
 
-        $response = $this->put(route('public.update', $app->no_rujukan), $updatePayload);
+        $response = $this->withSession(["verified_applicant_{$app->no_rujukan}" => $app->no_kp])
+            ->put(route('public.update', $app->no_rujukan), $updatePayload);
 
         $response->assertRedirect(route('public.check_status', ['carian' => $app->no_rujukan]));
 
@@ -332,7 +352,8 @@ class NaimbifApplicationTest extends TestCase
         $app = $this->createTestApp();
         $app->update(['status_negeri' => 'Lulus']);
 
-        $response = $this->get(route('public.edit', $app->no_rujukan));
+        $response = $this->withSession(["verified_applicant_{$app->no_rujukan}" => $app->no_kp])
+            ->get(route('public.edit', $app->no_rujukan));
         $response->assertRedirect(route('public.check_status', ['carian' => $app->no_rujukan]));
     }
 }

@@ -15,6 +15,7 @@ Route::get('/', [PublicApplicationController::class, 'index'])->name('public.hom
 Route::get('/permohonan', [PublicApplicationController::class, 'create'])->name('public.apply');
 Route::post('/permohonan/simpan', [PublicApplicationController::class, 'store'])->name('public.store');
 Route::get('/permohonan/kemaskini/{no_rujukan}', [PublicApplicationController::class, 'edit'])->name('public.edit');
+Route::post('/permohonan/sahkan/{no_rujukan}', [PublicApplicationController::class, 'verifyEdit'])->name('public.verify_edit');
 Route::put('/permohonan/kemaskini/{no_rujukan}', [PublicApplicationController::class, 'update'])->name('public.update');
 Route::get('/permohonan/berjaya/{no_rujukan}', [PublicApplicationController::class, 'success'])->name('public.success');
 Route::match(['get', 'post'], '/semakan', [PublicApplicationController::class, 'checkStatus'])->name('public.check_status');

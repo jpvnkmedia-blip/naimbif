@@ -207,7 +207,42 @@ class PublicApplicationController extends Controller
                 ->first();
         }
 
+        if ($query && $application) {
+            $cleanIc = preg_replace('/[^0-9]/', '', $query);
+            if ($cleanIc === $application->no_kp) {
+                session(["verified_applicant_{$application->no_rujukan}" => $application->no_kp]);
+            }
+        }
+
         return view('public.check_status', compact('application', 'query', 'searched'));
+    }
+
+    /**
+     * Pengesahan Keselamatan Identiti Pemohon (Security Challenge)
+     */
+    public function verifyEdit(Request $request, $no_rujukan)
+    {
+        $application = Application::where('no_rujukan', $no_rujukan)->firstOrFail();
+
+        $request->validate([
+            'no_kp' => 'required|string',
+        ], [
+            'no_kp.required' => 'Sila masukkan No. Kad Pengenalan pemohon untuk pengesahan keselamatan.',
+        ]);
+
+        $inputIc = preg_replace('/[^0-9]/', '', $request->no_kp);
+
+        if ($inputIc !== $application->no_kp) {
+            return redirect()->back()
+                ->with('error', 'Pengesahan Gagal: No. Kad Pengenalan tidak sepadan dengan rekod permohonan ' . $no_rujukan . '. Akses disekat demi keselamatan.')
+                ->withInput();
+        }
+
+        // Simpan sesi pengesahan
+        session(["verified_applicant_{$application->no_rujukan}" => $application->no_kp]);
+
+        return redirect()->route('public.edit', $application->no_rujukan)
+            ->with('success', 'Pengesahan identiti pemohon berjaya. Anda kini boleh mengemas kini maklumat.');
     }
 
     /**
@@ -223,6 +258,12 @@ class PublicApplicationController extends Controller
         if ($application->status_negeri === 'Lulus') {
             return redirect()->route('public.check_status', ['carian' => $application->no_rujukan])
                 ->with('error', 'Permohonan ini telah diluluskan rasmi oleh Jabatan dan tidak boleh dikemas kini secara dalam talian. Sila hubungi Pejabat Veterinar Jajahan jika terdapat pindaan.');
+        }
+
+        // KESELAMATAN: Semak sama ada pemohon telah lulus pengesahan identiti (No. KP)
+        $verifiedIc = session("verified_applicant_{$application->no_rujukan}");
+        if ($verifiedIc !== $application->no_kp) {
+            return view('public.verify_edit', compact('application'));
         }
 
         $jajahans = Application::JAJAHAN_LIST;
@@ -246,6 +287,15 @@ class PublicApplicationController extends Controller
         if ($application->status_negeri === 'Lulus') {
             return redirect()->route('public.check_status', ['carian' => $application->no_rujukan])
                 ->with('error', 'Permohonan ini telah diluluskan rasmi oleh Jabatan dan tidak boleh dikemas kini.');
+        }
+
+        // KESELAMATAN: Pastikan No KP sepadan dan sesi sah
+        $verifiedIc = session("verified_applicant_{$application->no_rujukan}");
+        $submittedIc = preg_replace('/[^0-9]/', '', $request->no_kp);
+
+        if ($verifiedIc !== $application->no_kp && $submittedIc !== $application->no_kp) {
+            return redirect()->route('public.edit', $application->no_rujukan)
+                ->with('error', 'Ralat Keselamatan: Anda tidak mempunyai kebenaran untuk mengemas kini rekod pemohon ini.');
         }
 
         $rules = [
