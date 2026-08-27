@@ -1,0 +1,28 @@
+runtime: php83
+
+env_variables:
+  APP_NAME: "NAIMbif - Ladang Bridlot"
+  APP_ENV: production
+  APP_KEY: base64:YVfDpakeFLsXPGzPjwyH3UWbwglTFLrImnnWFwhiZ60=
+  APP_DEBUG: false
+  APP_URL: https://naimbif.appspot.com
+  LOG_CHANNEL: stderr
+  DB_CONNECTION: sqlite
+  SESSION_DRIVER: cookie
+  CACHE_STORE: array
+
+handlers:
+  - url: /favicon\.ico
+    static_files: public/favicon.ico
+    upload: public/favicon.ico
+
+  - url: /robots\.txt
+    static_files: public/robots.txt
+    upload: public/robots.txt
+
+  - url: /images/(.*)
+    static_files: public/images/\1
+    upload: public/images/(.*)
+
+  - url: .*
+    script: auto
