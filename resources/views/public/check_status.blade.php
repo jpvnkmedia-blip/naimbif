@@ -33,6 +33,11 @@
                 <i class="fas fa-arrow-right ml-2"></i>
             </button>
         </form>
+
+        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center text-xs text-slate-500">
+            <i class="fas fa-info-circle text-emerald-600 mr-2"></i>
+            <span><strong>Petunjuk Pemohon:</strong> Anda boleh menyemak perkembangan semasa atau <strong>mengemas kini maklumat</strong> permohonan dengan membuat carian No. KP atau No. Rujukan di atas.</span>
+        </div>
     </div>
 
     <!-- Result Display -->
@@ -40,18 +45,51 @@
         @if($application)
             <div class="bg-white rounded-3xl shadow-md border border-slate-200 overflow-hidden mb-8">
                 <!-- Result Header -->
-                <div class="p-6 sm:p-8 bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="p-6 sm:p-8 bg-slate-900 text-white flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div>
                         <div class="text-xs text-amber-400 font-bold uppercase tracking-wider font-mono">No. Rujukan: {{ $application->no_rujukan }}</div>
-                        <h2 class="text-xl font-black mt-1">{{ $application->nama }}</h2>
+                        <h2 class="text-xl sm:text-2xl font-black mt-1">{{ $application->nama }}</h2>
                         <div class="text-xs text-slate-400 mt-0.5">
-                            No. KP: <span class="font-mono text-slate-300">{{ $application->formatted_no_kp }}</span> | Jajahan: {{ $application->jajahan }}
+                            No. KP: <span class="font-mono text-slate-300 font-bold">{{ $application->formatted_no_kp }}</span> | Jajahan: <span class="text-slate-200 font-semibold">{{ $application->jajahan_ladang ?: $application->jajahan }}</span>
                         </div>
                     </div>
-                    <div>
+                    
+                    <!-- Action Toolbar in Header -->
+                    <div class="flex flex-wrap items-center gap-2.5">
                         {!! $application->status_badge !!}
+                        
+                        @if($application->status_negeri !== 'Lulus')
+                            <a href="{{ route('public.edit', $application->no_rujukan) }}"
+                               class="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-bold text-emerald-900 bg-emerald-400 hover:bg-emerald-300 shadow-md transition-all">
+                                <i class="fas fa-edit mr-1.5 text-emerald-950"></i> Ubah / Kemas Kini Maklumat
+                            </a>
+                        @endif
+
+                        <a href="{{ route('public.print', $application->no_rujukan) }}" target="_blank"
+                           class="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-bold text-slate-200 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700 transition-all">
+                            <i class="fas fa-print mr-1.5 text-amber-400"></i> Cetak PDF
+                        </a>
                     </div>
                 </div>
+
+                <!-- Prominent Action Bar for Applicant -->
+                @if($application->status_negeri !== 'Lulus')
+                    <div class="p-4 sm:p-5 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50/50 border-b border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div class="flex items-center space-x-3 text-left">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg flex-shrink-0 shadow-sm">
+                                <i class="fas fa-user-edit"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-emerald-950">Perlu mengemas kini butiran permohonan anda?</div>
+                                <div class="text-[11px] text-emerald-800/80">Anda boleh meminda maklumat penternak, lokasi tapak ladang, atau matriks bilangan lembu.</div>
+                            </div>
+                        </div>
+                        <a href="{{ route('public.edit', $application->no_rujukan) }}"
+                           class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 shadow-md shadow-emerald-700/20 transition-all flex-shrink-0">
+                            <i class="fas fa-edit mr-2 text-emerald-200"></i> Ubah / Kemas Kini Sekarang
+                        </a>
+                    </div>
+                @endif
 
                 <!-- Status Progress Stepper -->
                 <div class="p-6 sm:p-8 border-b border-slate-200 bg-slate-50/50">
