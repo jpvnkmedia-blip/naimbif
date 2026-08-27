@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\LivestockInventory;
+use App\Models\SystemNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -111,6 +112,17 @@ class ApplicationManagementController extends Controller
             'status_permohonan' => $request->syor_permohonan === 'Disokong' ? 'Disemak Jajahan' : 'Dalam Semakan',
         ]);
 
+        // Log Notifikasi Sistem & Emel
+        SystemNotification::logAndNotify(
+            type: 'ulasan_jajahan',
+            title: 'Ulasan Jajahan Selesai: ' . $application->no_rujukan . ' (' . $application->syor_permohonan . ')',
+            message: 'Pegawai Jajahan (' . $application->jajahan . ') telah mengesahkan siasatan premis bagi ' . $application->nama . ' dengan status syor: ' . $application->syor_permohonan . ' (ID Premis: ' . ($application->id_premis ?: '-') . ').',
+            application: $application,
+            actionUrl: route('admin.applications.show', $application->id),
+            badgeColor: 'amber',
+            icon: 'fas fa-search-location'
+        );
+
         return redirect()->route('admin.applications.show', $application->id)
             ->with('success', 'Ulasan dan status tindakan Pejabat Jajahan telah berjaya disimpan.');
     }
@@ -148,6 +160,17 @@ class ApplicationManagementController extends Controller
             'diluluskan_oleh_user_id' => Auth::id(),
             'status_permohonan' => $request->status_negeri,
         ]);
+
+        // Log Notifikasi Sistem & Emel
+        SystemNotification::logAndNotify(
+            type: 'keputusan_jabatan',
+            title: 'Keputusan Jabatan: ' . $application->no_rujukan . ' (' . strtoupper($application->status_negeri) . ')',
+            message: 'Ibu Pejabat JPVNK telah mengeluarkan keputusan rasmi ' . strtoupper($application->status_negeri) . ' bagi pemohon ' . $application->nama . ' (No. Kelulusan: ' . ($application->no_rujukan_negeri ?: '-') . ').',
+            application: $application,
+            actionUrl: route('admin.applications.show', $application->id),
+            badgeColor: $application->status_negeri === 'Lulus' ? 'emerald' : 'rose',
+            icon: 'fas fa-stamp'
+        );
 
         return redirect()->route('admin.applications.show', $application->id)
             ->with('success', 'Keputusan dan ulasan Jabatan telah berjaya dikemas kini.');

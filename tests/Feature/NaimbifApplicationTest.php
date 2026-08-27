@@ -375,5 +375,65 @@ class NaimbifApplicationTest extends TestCase
             ->get(route('public.edit', $app->no_rujukan));
         $response->assertRedirect(route('public.check_status', ['carian' => $app->no_rujukan]));
     }
+
+    public function test_submitting_application_creates_system_notification()
+    {
+        $app = $this->createTestApp();
+
+        \App\Models\SystemNotification::logAndNotify(
+            type: 'permohonan_baru',
+            title: 'Permohonan Baru Diterima (' . $app->no_rujukan . ')',
+            message: 'Permohonan baru oleh ' . $app->nama,
+            application: $app,
+            actionUrl: route('admin.applications.show', $app->id)
+        );
+
+        $this->assertDatabaseHas('system_notifications', [
+            'type' => 'permohonan_baru',
+            'no_rujukan' => $app->no_rujukan,
+            'is_read' => false,
+        ]);
+    }
+
+    public function test_officer_can_view_notifications_and_mark_as_read()
+    {
+        $user = User::where('email', 'admin@jpvnk.gov.my')->first();
+        $app = $this->createTestApp();
+
+        $notif = \App\Models\SystemNotification::create([
+            'application_id' => $app->id,
+            'no_rujukan' => $app->no_rujukan,
+            'type' => 'permohonan_baru',
+            'title' => 'Permohonan Baru Demo',
+            'message' => 'Ujian notifikasi sistem',
+            'is_read' => false,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.notifications.index'));
+        $response->assertStatus(200);
+        $response->assertSee('Permohonan Baru Demo');
+
+        // Mark as read
+        $markResponse = $this->actingAs($user)->get(route('admin.notifications.show', $notif->id));
+        $this->assertDatabaseHas('system_notifications', [
+            'id' => $notif->id,
+            'is_read' => true,
+        ]);
+
+        // Mark all
+        $markAllResponse = $this->actingAs($user)->post(route('admin.notifications.mark_all'));
+        $markAllResponse->assertRedirect();
+    }
+
+    public function test_notifications_endpoint_returns_json()
+    {
+        $user = User::where('email', 'admin@jpvnk.gov.my')->first();
+        $response = $this->actingAs($user)->get(route('admin.notifications.latest'));
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'unread_count',
+            'notifications',
+        ]);
+    }
 }
 

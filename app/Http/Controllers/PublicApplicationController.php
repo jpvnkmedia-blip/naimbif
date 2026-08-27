@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\LivestockInventory;
+use App\Models\SystemNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -161,6 +162,17 @@ class PublicApplicationController extends Controller
             }
 
             DB::commit();
+
+            // Log Notifikasi Sistem & Notifikasi Emel
+            SystemNotification::logAndNotify(
+                type: 'permohonan_baru',
+                title: 'Permohonan Baru Diterima (' . $application->no_rujukan . ')',
+                message: 'Pemohon ' . $application->nama . ' (No. KP: ' . $application->formatted_no_kp . ') telah menghantar permohonan Ladang Bridlot bagi jajahan ' . ($application->jajahan_ladang ?: $application->jajahan) . ' dengan ' . $application->total_ternakan . ' ekor ternakan.',
+                application: $application,
+                actionUrl: route('admin.applications.show', $application->id),
+                badgeColor: 'emerald',
+                icon: 'fas fa-file-invoice'
+            );
 
             return redirect()->route('public.success', $application->no_rujukan)
                 ->with('success', 'Permohonan anda telah berjaya dihantar.');
@@ -435,6 +447,17 @@ class PublicApplicationController extends Controller
             }
 
             DB::commit();
+
+            // Log Notifikasi Sistem & Notifikasi Emel
+            SystemNotification::logAndNotify(
+                type: 'permohonan_dikemaskini',
+                title: 'Pindaan Data oleh Pemohon (' . $application->no_rujukan . ')',
+                message: 'Pemohon ' . $application->nama . ' telah mengemas kini butiran permohonan ' . $application->no_rujukan . ' (Jajahan: ' . ($application->jajahan_ladang ?: $application->jajahan) . ').',
+                application: $application,
+                actionUrl: route('admin.applications.show', $application->id),
+                badgeColor: 'blue',
+                icon: 'fas fa-edit'
+            );
 
             return redirect()->route('public.check_status', ['carian' => $application->no_rujukan])
                 ->with('success', 'Maklumat permohonan ' . $application->no_rujukan . ' telah berjaya dikemas kini.');

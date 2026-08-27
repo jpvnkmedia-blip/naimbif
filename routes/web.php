@@ -45,4 +45,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/permohonan/{id}/jajahan', [ApplicationManagementController::class, 'updateJajahan'])->name('applications.update_jajahan');
     Route::post('/permohonan/{id}/negeri', [ApplicationManagementController::class, 'updateNegeri'])->name('applications.update_negeri');
     Route::delete('/permohonan/{id}', [ApplicationManagementController::class, 'destroy'])->name('applications.destroy');
+
+    // Notifikasi & Log Aktiviti Sistem
+    Route::get('/notifikasi', [\App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifikasi/terkini', [\App\Http\Controllers\Admin\NotificationController::class, 'getLatest'])->name('notifications.latest');
+    Route::get('/notifikasi/{id}', [\App\Http\Controllers\Admin\NotificationController::class, 'markAsRead'])->name('notifications.show');
+    Route::post('/notifikasi/baca-semua', [\App\Http\Controllers\Admin\NotificationController::class, 'markAllAsRead'])->name('notifications.mark_all');
 });
