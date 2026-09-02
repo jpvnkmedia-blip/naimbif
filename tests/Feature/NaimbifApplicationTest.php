@@ -613,35 +613,21 @@ class NaimbifApplicationTest extends TestCase
         $this->assertEquals($initialCount + 1, \App\Models\SystemNotification::count());
     }
 
-    public function test_officer_can_view_registration_form()
+    public function test_public_registration_is_disabled_and_redirects_to_login()
     {
+        // 1. GET /register redirects to login
         $response = $this->get(route('register'));
-        $response->assertStatus(200);
-        $response->assertSee('Daftar Akaun Pegawai');
-        $response->assertSee('Alamat E-mel Rasmi');
-    }
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHas('info');
 
-    public function test_officer_can_register_new_account()
-    {
-        $payload = [
-            'name' => 'Dr. Wan Mohd Hafiz bin Wan Harun',
-            'email' => 'hafiz.harun@jpvnk.gov.my',
-            'jawatan' => 'Pegawai Veterinar GV44',
-            'no_telefon' => '019-9112233',
-            'role' => 'pegawai_jajahan',
-            'jajahan' => 'Bachok',
+        // 2. POST /register redirects to login
+        $postResponse = $this->post(route('register'), [
+            'name' => 'Dr. Wan Mohd Hafiz',
+            'email' => 'hafiz@jpvnk.gov.my',
             'password' => 'password123',
-            'password_confirmation' => 'password123',
-        ];
-
-        $response = $this->post(route('register'), $payload);
-        $response->assertRedirect(route('admin.dashboard'));
-
-        $this->assertDatabaseHas('users', [
-            'email' => 'hafiz.harun@jpvnk.gov.my',
-            'jajahan' => 'Bachok',
-            'role' => 'pegawai_jajahan',
         ]);
+        $postResponse->assertRedirect(route('login'));
+        $postResponse->assertSessionHas('info');
     }
 
     public function test_admin_can_view_and_manage_officers()

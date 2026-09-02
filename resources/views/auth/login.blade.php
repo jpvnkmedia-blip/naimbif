@@ -22,6 +22,12 @@
                 </div>
             @endif
 
+            @if (session('info'))
+                <div class="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold">
+                    <i class="fas fa-info-circle mr-1 text-blue-500"></i> {{ session('info') }}
+                </div>
+            @endif
+
             <div>
                 <label for="email" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Alamat E-mel Rasmi</label>
                 <div class="relative">
@@ -57,10 +63,10 @@
                 <i class="fas fa-sign-in-alt mr-2 mt-0.5"></i> Log Masuk Sistem
             </button>
 
-            <div class="pt-2 text-center">
-                <a href="{{ route('register') }}" class="w-full inline-flex items-center justify-center py-2.5 px-4 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-colors">
-                    <i class="fas fa-user-plus mr-2 text-emerald-600"></i> Daftar Akaun Pegawai Baharu
-                </a>
+            <div class="pt-4 text-center border-t border-slate-100">
+                <p class="text-[11px] text-slate-400">
+                    <i class="fas fa-shield-alt mr-1 text-slate-400"></i> Pendaftaran akaun pegawai baharu diuruskan secara berpusat oleh Pentadbir (Admin) JPVNK.
+                </p>
             </div>
         </form>
     </div>
