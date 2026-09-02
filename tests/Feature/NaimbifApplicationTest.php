@@ -581,6 +581,38 @@ class NaimbifApplicationTest extends TestCase
         ]);
     }
 
+    public function test_admin_activities_are_not_logged_to_notifications()
+    {
+        $admin = User::where('email', 'admin@jpvnk.gov.my')->first();
+        $officer = User::where('email', 'kb@jpvnk.gov.my')->first();
+        $app = $this->createTestApp();
+        $initialCount = \App\Models\SystemNotification::count();
+
+        // 1. Admin logs notification via helper -> ignored (returns null, no db insert)
+        $this->actingAs($admin);
+        $result = \App\Models\SystemNotification::logAndNotify(
+            type: 'ulasan_jajahan',
+            title: 'Tindakan Admin Ujian',
+            message: 'Aktiviti oleh Admin tidak perlu masuk notifikasi',
+            application: $app
+        );
+
+        $this->assertNull($result);
+        $this->assertEquals($initialCount, \App\Models\SystemNotification::count());
+
+        // 2. Non-admin (District Officer) triggers notification -> successfully created
+        $this->actingAs($officer);
+        $officerResult = \App\Models\SystemNotification::logAndNotify(
+            type: 'ulasan_jajahan',
+            title: 'Tindakan Pegawai Jajahan',
+            message: 'Aktiviti oleh Pegawai Jajahan direkodkan',
+            application: $app
+        );
+
+        $this->assertNotNull($officerResult);
+        $this->assertEquals($initialCount + 1, \App\Models\SystemNotification::count());
+    }
+
     public function test_officer_can_view_registration_form()
     {
         $response = $this->get(route('register'));

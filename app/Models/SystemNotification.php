@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Mail\NaimbifNotificationMail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -44,6 +45,7 @@ class SystemNotification extends Model
 
     /**
      * Helper untuk mencipta notifikasi sistem dan menghantar notifikasi emel secara automatik.
+     * Aktiviti yang dilakukan oleh Pentadbir (Admin) dikecualikan daripada notifikasi.
      */
     public static function logAndNotify(
         string $type,
@@ -54,12 +56,17 @@ class SystemNotification extends Model
         string $badgeColor = 'emerald',
         string $icon = 'fas fa-bell',
         ?int $userId = null
-    ): self {
+    ): ?self {
+        // Sekiranya tindakan dilakukan oleh Pentadbir (Admin), abaikan notifikasi
+        if (Auth::check() && Auth::user()->isAdmin()) {
+            return null;
+        }
+
         $notification = self::create([
-            'user_id' => $userId,
+            'user_id' => $userId ?: (Auth::check() ? Auth::id() : null),
             'application_id' => $application?->id,
             'no_rujukan' => $application?->no_rujukan,
-            'jajahan' => $application?->jajahan,
+            'jajahan' => $application?->jajahan_ladang ?: $application?->jajahan,
             'type' => $type,
             'title' => $title,
             'message' => $message,
