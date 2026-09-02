@@ -521,6 +521,7 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200 bg-white">
                             @foreach($bakas as $b)
+                                @php $bKey = \Illuminate\Support\Str::slug($b, '_'); @endphp
                                 <tr class="hover:bg-slate-50/80 transition-colors font-medium">
                                     <td class="p-2.5 text-left border-r border-slate-200 font-bold text-slate-800">
                                         {{ $b }}
@@ -535,38 +536,38 @@
                                     <!-- Betina Anak -->
                                     <td class="p-1.5 border-r border-slate-200 bg-emerald-50/30">
                                         <input type="number" min="0" name="stok[{{ $b }}][betina_anak]"
-                                               x-model.number="stok['{{ $b }}'].betina_anak"
+                                               x-model.number="stok.{{ $bKey }}.betina_anak"
                                                class="table-input">
                                     </td>
                                     <!-- Betina Dara -->
                                     <td class="p-1.5 border-r border-slate-200 bg-emerald-50/30">
                                         <input type="number" min="0" name="stok[{{ $b }}][betina_dara]"
-                                               x-model.number="stok['{{ $b }}'].betina_dara"
+                                               x-model.number="stok.{{ $bKey }}.betina_dara"
                                                class="table-input">
                                     </td>
                                     <!-- Betina Induk -->
                                     <td class="p-1.5 border-r border-slate-200 bg-emerald-50/30">
                                         <input type="number" min="0" name="stok[{{ $b }}][betina_induk]"
-                                               x-model.number="stok['{{ $b }}'].betina_induk"
+                                               x-model.number="stok.{{ $bKey }}.betina_induk"
                                                class="table-input">
                                     </td>
 
                                     <!-- Jantan Anak -->
                                     <td class="p-1.5 border-r border-slate-200 bg-blue-50/30">
                                         <input type="number" min="0" name="stok[{{ $b }}][jantan_anak]"
-                                               x-model.number="stok['{{ $b }}'].jantan_anak"
+                                               x-model.number="stok.{{ $bKey }}.jantan_anak"
                                                class="table-input">
                                     </td>
                                     <!-- Jantan Pejantan -->
                                     <td class="p-1.5 border-r border-slate-200 bg-blue-50/30">
                                         <input type="number" min="0" name="stok[{{ $b }}][jantan_pejantan]"
-                                               x-model.number="stok['{{ $b }}'].jantan_pejantan"
+                                               x-model.number="stok.{{ $bKey }}.jantan_pejantan"
                                                class="table-input">
                                     </td>
 
                                     <!-- Row Total -->
                                     <td class="p-2 font-bold text-slate-900 bg-slate-100 text-sm">
-                                        <span x-text="getRowTotal('{{ $b }}')">0</span>
+                                        <span x-text="getRowTotal('{{ $bKey }}')">0</span>
                                     </td>
                                 </tr>
                             @endforeach
@@ -682,7 +683,7 @@
             gpsLng: '{{ old("gps_longitud", "102.2381") }}',
             stok: {
                 @foreach($bakas as $b)
-                '{{ $b }}': {
+                '{{ \Illuminate\Support\Str::slug($b, '_') }}': {
                     betina_anak: 0,
                     betina_dara: 0,
                     betina_induk: 0,

@@ -447,48 +447,49 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200 bg-white">
                             @foreach($bakas as $bIndex => $baka)
+                                @php $bKey = \Illuminate\Support\Str::slug($baka, '_'); @endphp
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200 bg-slate-50/50">
                                         {{ $baka }}
                                         @if($baka === 'LAIN-LAIN')
                                             <input type="text" name="stok[{{ $baka }}][nama_baka_lain]"
-                                                   x-model="stok['{{ $baka }}'].nama_baka_lain"
+                                                   x-model="stok.{{ $bKey }}.nama_baka_lain"
                                                    placeholder="Nyatakan baka lain..."
                                                    class="w-full mt-1.5 px-2 py-1 text-[11px] rounded border border-slate-300">
                                         @endif
                                     </td>
                                     <td class="p-2 border-r border-slate-200">
                                         <input type="number" min="0" name="stok[{{ $baka }}][betina_anak]"
-                                               x-model.number="stok['{{ $baka }}'].betina_anak"
+                                               x-model.number="stok.{{ $bKey }}.betina_anak"
                                                @input="calculateTotals"
                                                class="table-input">
                                     </td>
                                     <td class="p-2 border-r border-slate-200">
                                         <input type="number" min="0" name="stok[{{ $baka }}][betina_dara]"
-                                               x-model.number="stok['{{ $baka }}'].betina_dara"
+                                               x-model.number="stok.{{ $bKey }}.betina_dara"
                                                @input="calculateTotals"
                                                class="table-input">
                                     </td>
                                     <td class="p-2 border-r border-slate-200">
                                         <input type="number" min="0" name="stok[{{ $baka }}][betina_induk]"
-                                               x-model.number="stok['{{ $baka }}'].betina_induk"
+                                               x-model.number="stok.{{ $bKey }}.betina_induk"
                                                @input="calculateTotals"
                                                class="table-input">
                                     </td>
                                     <td class="p-2 border-r border-slate-200">
                                         <input type="number" min="0" name="stok[{{ $baka }}][jantan_anak]"
-                                               x-model.number="stok['{{ $baka }}'].jantan_anak"
+                                               x-model.number="stok.{{ $bKey }}.jantan_anak"
                                                @input="calculateTotals"
                                                class="table-input">
                                     </td>
                                     <td class="p-2 border-r border-slate-200">
                                         <input type="number" min="0" name="stok[{{ $baka }}][jantan_pejantan]"
-                                               x-model.number="stok['{{ $baka }}'].jantan_pejantan"
+                                               x-model.number="stok.{{ $bKey }}.jantan_pejantan"
                                                @input="calculateTotals"
                                                class="table-input">
                                     </td>
                                     <td class="p-2.5 text-center font-bold text-slate-800 bg-emerald-50/50 font-mono text-sm">
-                                        <span x-text="rowTotals['{{ $baka }}'] || 0">0</span>
+                                        <span x-text="rowTotals.{{ $bKey }} || 0">0</span>
                                     </td>
                                 </tr>
                             @endforeach
@@ -606,7 +607,8 @@ function applicationEditForm() {
 
         stok: {
             @foreach($bakas as $baka)
-                '{{ $baka }}': {
+                @php $bKey = \Illuminate\Support\Str::slug($baka, '_'); @endphp
+                '{{ $bKey }}': {
                     betina_anak: {{ old("stok.{$baka}.betina_anak", isset($inventories[$baka]) ? $inventories[$baka]->betina_anak : 0) }},
                     betina_dara: {{ old("stok.{$baka}.betina_dara", isset($inventories[$baka]) ? $inventories[$baka]->betina_dara : 0) }},
                     betina_induk: {{ old("stok.{$baka}.betina_induk", isset($inventories[$baka]) ? $inventories[$baka]->betina_induk : 0) }},

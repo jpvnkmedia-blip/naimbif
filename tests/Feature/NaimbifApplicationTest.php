@@ -433,6 +433,13 @@ class NaimbifApplicationTest extends TestCase
                     'jantan_anak' => 1,
                     'jantan_pejantan' => 2,
                 ],
+                "BLONDE D'AQUITAINE" => [
+                    'betina_anak' => 4,
+                    'betina_dara' => 1,
+                    'betina_induk' => 2,
+                    'jantan_anak' => 0,
+                    'jantan_pejantan' => 1,
+                ],
             ],
         ];
 
@@ -440,6 +447,13 @@ class NaimbifApplicationTest extends TestCase
             ->put(route('public.update', $app->no_rujukan), $updatePayload);
 
         $response->assertRedirect(route('public.check_status', ['carian' => $app->no_rujukan]));
+
+        $this->assertDatabaseHas('livestock_inventories', [
+            'application_id' => $app->id,
+            'baka' => "BLONDE D'AQUITAINE",
+            'betina_anak' => 4,
+            'jumlah_baka' => 8,
+        ]);
 
         $this->assertDatabaseHas('applications', [
             'id' => $app->id,
