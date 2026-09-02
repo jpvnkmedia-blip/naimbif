@@ -262,6 +262,27 @@ class NaimbifApplicationTest extends TestCase
         ]);
     }
 
+    public function test_district_officer_cannot_update_state_decision()
+    {
+        $districtOfficer = User::where('email', 'kb@jpvnk.gov.my')->first();
+        $app = $this->createTestApp();
+
+        // 1. Visit show page: District officer should NOT see the state decision submit button
+        $showResponse = $this->actingAs($districtOfficer)->get(route('admin.applications.show', $app->id));
+        $showResponse->assertStatus(200);
+        $showResponse->assertDontSee('Kemas Kini Keputusan Jabatan');
+        $showResponse->assertSee('Tindakan Pejabat Jajahan');
+        $showResponse->assertSee('Keputusan Ibu Pejabat JPVNK');
+
+        // 2. Direct POST to update_negeri is blocked
+        $postResponse = $this->actingAs($districtOfficer)->post(route('admin.applications.update_negeri', $app->id), [
+            'status_negeri' => 'Lulus',
+            'pegawai_pelulus' => 'En. Mohd Ridzuan bin Abdullah',
+        ]);
+
+        $postResponse->assertSessionHas('error');
+    }
+
     public function test_admin_can_export_applications_to_csv()
     {
         $user = User::where('email', 'admin@jpvnk.gov.my')->first();

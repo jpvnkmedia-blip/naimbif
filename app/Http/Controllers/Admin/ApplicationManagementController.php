@@ -132,6 +132,11 @@ class ApplicationManagementController extends Controller
      */
     public function updateNegeri(Request $request, $id)
     {
+        if (!Auth::user()->isPegawaiNegeri()) {
+            return redirect()->back()
+                ->with('error', 'Akses Disekat: Hanya Pegawai Ibu Pejabat JPVNK (Negeri) atau Pentadbir dibenarkan mengemas kini keputusan kelulusan Jabatan.');
+        }
+
         $application = Application::findOrFail($id);
 
         $request->validate([
