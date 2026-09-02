@@ -401,6 +401,13 @@ class NaimbifApplicationTest extends TestCase
         // 7. Direct GET request on verify_edit route does not throw 405, but redirects gracefully
         $directGetResponse = $this->get(route('public.verify_edit', $app->no_rujukan));
         $directGetResponse->assertRedirect(route('public.edit', $app->no_rujukan));
+
+        // 8. Checking status with IC does not bypass 2FA requirement
+        $statusResponse = $this->get(route('public.check_status', ['carian' => $app->no_kp]));
+        $statusResponse->assertStatus(200);
+        $editAfterStatusResponse = $this->get(route('public.edit', $app->no_rujukan));
+        $editAfterStatusResponse->assertStatus(200);
+        $editAfterStatusResponse->assertSee('Pengesahan Keselamatan Dwi-Faktor');
     }
 
     public function test_applicant_can_update_application_data()

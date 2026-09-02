@@ -243,10 +243,7 @@ class PublicApplicationController extends Controller
         }
 
         if ($query && $application) {
-            $cleanIc = preg_replace('/[^0-9]/', '', $query);
-            if ($cleanIc === $application->no_kp) {
-                session(["verified_applicant_{$application->no_rujukan}" => $application->no_kp]);
-            }
+            session()->forget("verified_applicant_{$application->no_rujukan}");
         }
 
         return view('public.check_status', compact('application', 'query', 'searched'));
@@ -474,6 +471,9 @@ class PublicApplicationController extends Controller
                 badgeColor: 'blue',
                 icon: 'fas fa-edit'
             );
+
+            // Clear verified session so subsequent edits require 2FA again
+            session()->forget("verified_applicant_{$application->no_rujukan}");
 
             return redirect()->route('public.check_status', ['carian' => $application->no_rujukan])
                 ->with('success', 'Maklumat permohonan ' . $application->no_rujukan . ' telah berjaya dikemas kini.');
