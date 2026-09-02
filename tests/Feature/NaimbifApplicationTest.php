@@ -283,6 +283,29 @@ class NaimbifApplicationTest extends TestCase
         $postResponse->assertSessionHas('error');
     }
 
+    public function test_state_officer_cannot_update_district_inspection()
+    {
+        $stateOfficer = User::where('email', 'negeri@jpvnk.gov.my')->first();
+        $app = $this->createTestApp();
+
+        // 1. Visit show page: State officer should NOT see the district submit button
+        $showResponse = $this->actingAs($stateOfficer)->get(route('admin.applications.show', $app->id));
+        $showResponse->assertStatus(200);
+        $showResponse->assertDontSee('Simpan Ulasan Jajahan');
+        $showResponse->assertSee('Laporan Siasatan Jajahan');
+        $showResponse->assertSee('Kemas Kini Keputusan Jabatan');
+
+        // 2. Direct POST to update_jajahan is blocked
+        $postResponse = $this->actingAs($stateOfficer)->post(route('admin.applications.update_jajahan', $app->id), [
+            'id_premis' => 'JPV/TEST/2026/01',
+            'status_kelengkapan' => 'Lengkap',
+            'syor_permohonan' => 'Disokong',
+            'pegawai_penyiasat' => 'Dr. State Officer',
+        ]);
+
+        $postResponse->assertSessionHas('error');
+    }
+
     public function test_admin_can_export_applications_to_csv()
     {
         $user = User::where('email', 'admin@jpvnk.gov.my')->first();

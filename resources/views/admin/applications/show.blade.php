@@ -279,76 +279,136 @@
         <div class="lg:col-span-5 space-y-6">
 
             <!-- 5. BORANG TINDAKAN PEJABAT JAJAHAN -->
-            <div class="bg-white rounded-3xl p-6 border-2 border-emerald-600/30 shadow-md space-y-4">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-xs font-bold">
-                            <i class="fas fa-building"></i>
+            @if(Auth::user()->isPegawaiJajahan())
+                <div class="bg-white rounded-3xl p-6 border-2 border-emerald-600/30 shadow-md space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-xs font-bold">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <h3 class="text-sm font-bold text-emerald-950 uppercase tracking-wider">Tindakan Pejabat Jajahan</h3>
                         </div>
-                        <h3 class="text-sm font-bold text-emerald-950 uppercase tracking-wider">Tindakan Pejabat Jajahan</h3>
+                        <span class="text-[10px] uppercase font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded">
+                            {{ $application->jajahan_ladang ?: $application->jajahan }}
+                        </span>
                     </div>
-                    <span class="text-[10px] uppercase font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded">
-                        {{ $application->jajahan_ladang ?: $application->jajahan }}
-                    </span>
+
+                    <form action="{{ route('admin.applications.update_jajahan', $application->id) }}" method="POST" class="space-y-4">
+                        @csrf
+
+                        <!-- ID Premis -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">ID PREMIS TERNAKAN</label>
+                            <input type="text" name="id_premis" value="{{ old('id_premis', $application->id_premis) }}"
+                                   placeholder="Contoh: JPV/KB/BL/2026/042"
+                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 font-mono font-bold focus:ring-emerald-500">
+                        </div>
+
+                        <!-- Status Kelengkapan -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">STATUS KELENGKAPAN DOKUMEN</label>
+                            <select name="status_kelengkapan" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 font-semibold focus:ring-emerald-500">
+                                <option value="Dalam Semakan" {{ old('status_kelengkapan', $application->status_kelengkapan) == 'Dalam Semakan' ? 'selected' : '' }}>Dalam Semakan</option>
+                                <option value="Lengkap" {{ old('status_kelengkapan', $application->status_kelengkapan) == 'Lengkap' ? 'selected' : '' }}>Lengkap</option>
+                                <option value="Tidak Lengkap" {{ old('status_kelengkapan', $application->status_kelengkapan) == 'Tidak Lengkap' ? 'selected' : '' }}>Tidak Lengkap</option>
+                            </select>
+                        </div>
+
+                        <!-- Syor Permohonan -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">SYOR PERMOHONAN JAJAHAN</label>
+                            <select name="syor_permohonan" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 font-semibold focus:ring-emerald-500">
+                                <option value="Belum Disemak" {{ old('syor_permohonan', $application->syor_permohonan) == 'Belum Disemak' ? 'selected' : '' }}>Belum Disemak</option>
+                                <option value="Disokong" {{ old('syor_permohonan', $application->syor_permohonan) == 'Disokong' ? 'selected' : '' }}>Disokong</option>
+                                <option value="Tidak disokong" {{ old('syor_permohonan', $application->syor_permohonan) == 'Tidak disokong' ? 'selected' : '' }}>Tidak Disokong</option>
+                            </select>
+                        </div>
+
+                        <!-- Pegawai Penyiasat & Tarikh Siasatan -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1">PEGAWAI PENYIASAT <span class="text-rose-500">*</span></label>
+                                <input type="text" name="pegawai_penyiasat" value="{{ old('pegawai_penyiasat', $application->pegawai_penyiasat ?: Auth::user()->name) }}" required
+                                       class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-emerald-500">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-bold text-slate-700 mb-1">TARIKH SIASATAN PREMIS</label>
+                                <input type="date" name="tarikh_siasatan" value="{{ old('tarikh_siasatan', $application->tarikh_siasatan ? $application->tarikh_siasatan->format('Y-m-d') : date('Y-m-d')) }}"
+                                       class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-emerald-500">
+                            </div>
+                        </div>
+
+                        <!-- Catatan Jajahan -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">CATATAN & LAPORAN SIASATAN JAJAHAN</label>
+                            <textarea name="catatan_jajahan" rows="3" placeholder="Laporan keadaan kandang, biosekuriti, kualiti padang ragut..."
+                                      class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-emerald-500">{{ old('catatan_jajahan', $application->catatan_jajahan) }}</textarea>
+                        </div>
+
+                        <button type="submit" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 transition-colors shadow-sm flex items-center justify-center">
+                            <i class="fas fa-save mr-1.5"></i> Simpan Ulasan Jajahan
+                        </button>
+                    </form>
                 </div>
-
-                <form action="{{ route('admin.applications.update_jajahan', $application->id) }}" method="POST" class="space-y-4">
-                    @csrf
-
-                    <!-- ID Premis -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">ID PREMIS TERNAKAN</label>
-                        <input type="text" name="id_premis" value="{{ old('id_premis', $application->id_premis) }}"
-                               placeholder="Contoh: JPV/KB/BL/2026/042"
-                               class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 font-mono font-bold focus:ring-emerald-500">
-                    </div>
-
-                    <!-- Status Kelengkapan -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">STATUS KELENGKAPAN DOKUMEN</label>
-                        <select name="status_kelengkapan" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 font-semibold focus:ring-emerald-500">
-                            <option value="Dalam Semakan" {{ old('status_kelengkapan', $application->status_kelengkapan) == 'Dalam Semakan' ? 'selected' : '' }}>Dalam Semakan</option>
-                            <option value="Lengkap" {{ old('status_kelengkapan', $application->status_kelengkapan) == 'Lengkap' ? 'selected' : '' }}>Lengkap</option>
-                            <option value="Tidak Lengkap" {{ old('status_kelengkapan', $application->status_kelengkapan) == 'Tidak Lengkap' ? 'selected' : '' }}>Tidak Lengkap</option>
-                        </select>
-                    </div>
-
-                    <!-- Syor Permohonan -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">SYOR PERMOHONAN JAJAHAN</label>
-                        <select name="syor_permohonan" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 font-semibold focus:ring-emerald-500">
-                            <option value="Belum Disemak" {{ old('syor_permohonan', $application->syor_permohonan) == 'Belum Disemak' ? 'selected' : '' }}>Belum Disemak</option>
-                            <option value="Disokong" {{ old('syor_permohonan', $application->syor_permohonan) == 'Disokong' ? 'selected' : '' }}>Disokong</option>
-                            <option value="Tidak disokong" {{ old('syor_permohonan', $application->syor_permohonan) == 'Tidak disokong' ? 'selected' : '' }}>Tidak Disokong</option>
-                        </select>
-                    </div>
-
-                    <!-- Pegawai Penyiasat & Tarikh Siasatan -->
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="col-span-2">
-                            <label class="block text-xs font-bold text-slate-700 mb-1">PEGAWAI PENYIASAT <span class="text-rose-500">*</span></label>
-                            <input type="text" name="pegawai_penyiasat" value="{{ old('pegawai_penyiasat', $application->pegawai_penyiasat ?: Auth::user()->name) }}" required
-                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-emerald-500">
+            @else
+                <!-- Paparan Hasil Siasatan Jajahan untuk Pegawai Negeri (Read-Only) -->
+                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Laporan Siasatan Jajahan</h3>
                         </div>
-                        <div class="col-span-2">
-                            <label class="block text-xs font-bold text-slate-700 mb-1">TARIKH SIASATAN PREMIS</label>
-                            <input type="date" name="tarikh_siasatan" value="{{ old('tarikh_siasatan', $application->tarikh_siasatan ? $application->tarikh_siasatan->format('Y-m-d') : date('Y-m-d')) }}"
-                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-emerald-500">
+                        <span class="text-[10px] uppercase font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded">
+                            {{ $application->jajahan_ladang ?: $application->jajahan }}
+                        </span>
+                    </div>
+
+                    @if($application->syor_permohonan === 'Disokong' || $application->syor_permohonan === 'Tidak disokong' || $application->id_premis)
+                        <div class="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-2 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-slate-700">Perakuan Syor Jajahan:</span>
+                                <span class="px-2.5 py-0.5 rounded-full font-bold text-xs {{ $application->syor_permohonan === 'Disokong' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300' }}">
+                                    {{ $application->syor_permohonan }}
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500">ID Premis Ternakan:</span>
+                                <span class="font-mono font-bold text-emerald-900 ml-1">{{ $application->id_premis ?? 'Tiada' }}</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500">Status Kelengkapan:</span>
+                                <span class="font-semibold text-slate-800 ml-1">{{ $application->status_kelengkapan }}</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500">Pegawai Penyiasat:</span>
+                                <span class="font-semibold text-slate-800 ml-1">{{ $application->pegawai_penyiasat ?? '-' }}</span>
+                            </div>
+                            @if($application->tarikh_siasatan)
+                                <div>
+                                    <span class="text-slate-500">Tarikh Siasatan:</span>
+                                    <span class="font-semibold text-slate-800 ml-1">{{ $application->tarikh_siasatan->format('d/m/Y') }}</span>
+                                </div>
+                            @endif
+                            @if($application->catatan_jajahan)
+                                <div class="pt-2 border-t border-emerald-200/60 text-slate-700 italic">
+                                    "{{ $application->catatan_jajahan }}"
+                                </div>
+                            @endif
                         </div>
-                    </div>
-
-                    <!-- Catatan Jajahan -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">CATATAN & LAPORAN SIASATAN JAJAHAN</label>
-                        <textarea name="catatan_jajahan" rows="3" placeholder="Laporan keadaan kandang, biosekuriti, kualiti padang ragut..."
-                                  class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-emerald-500">{{ old('catatan_jajahan', $application->catatan_jajahan) }}</textarea>
-                    </div>
-
-                    <button type="submit" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 transition-colors shadow-sm flex items-center justify-center">
-                        <i class="fas fa-save mr-1.5"></i> Simpan Ulasan Jajahan
-                    </button>
-                </form>
-            </div>
+                    @else
+                        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-500 space-y-2">
+                            <div class="flex items-center text-slate-700 font-bold">
+                                <i class="fas fa-hourglass-half text-amber-500 mr-1.5"></i> Menunggu Siasatan Pejabat Jajahan
+                            </div>
+                            <p class="text-[11px] leading-relaxed text-slate-500">
+                                Pejabat Veterinar Jajahan {{ $application->jajahan_ladang ?: $application->jajahan }} belum selesai membuat siasatan premis dan perakuan syor.
+                            </p>
+                        </div>
+                    @endif
+                </div>
+            @endif
 
             <!-- 6. BORANG KELULUSAN IBU PEJABAT (JPVNK) -->
             @if(Auth::user()->isPegawaiNegeri())

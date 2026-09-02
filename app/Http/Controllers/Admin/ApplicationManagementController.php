@@ -87,6 +87,11 @@ class ApplicationManagementController extends Controller
      */
     public function updateJajahan(Request $request, $id)
     {
+        if (!Auth::user()->isPegawaiJajahan()) {
+            return redirect()->back()
+                ->with('error', 'Akses Disekat: Ruangan Tindakan Pejabat Jajahan hanya boleh diisi oleh Pegawai JPV Jajahan.');
+        }
+
         $application = Application::findOrFail($id);
 
         $request->validate([
