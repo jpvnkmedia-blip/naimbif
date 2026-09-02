@@ -55,6 +55,36 @@
             </div>
         </div>
 
+        @if (session('duplicate_error'))
+            @php $dup = session('duplicate_error'); @endphp
+            <div class="p-6 bg-amber-50 border-b-2 border-amber-300 text-amber-950">
+                <div class="flex items-start space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-200 text-amber-900 flex items-center justify-center text-lg flex-shrink-0 mt-0.5">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="space-y-2 flex-1 text-xs">
+                        <h3 class="text-sm font-bold text-amber-900">
+                            Pendaftaran Bertindih Dikesan: Permohonan Sedia Ada Ditemui
+                        </h3>
+                        <p class="leading-relaxed">
+                            No. Kad Pengenalan <strong class="font-mono bg-amber-200/80 px-1.5 py-0.5 rounded">{{ $dup['no_kp'] }}</strong> telah pun berdaftar dalam sistem dengan No. Rujukan <strong class="font-mono font-bold text-emerald-800">{{ $dup['no_rujukan'] }}</strong> (Pemohon: <strong>{{ $dup['nama'] }}</strong>, Status: <span class="font-bold text-amber-800">{{ $dup['status'] }}</span>).
+                        </p>
+                        <p class="text-[11px] text-amber-800">
+                            Setiap penternak hanya dibenarkan mempunyai <strong>satu (1) permohonan aktif</strong> pada satu-satu masa. Anda tidak perlu mendaftar semula. Sila semak status atau kemas kini permohonan anda melalui butang di bawah:
+                        </p>
+                        <div class="pt-2 flex flex-wrap gap-2">
+                            <a href="{{ route('public.check_status') }}?carian={{ $dup['no_rujukan'] }}" class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 shadow-sm transition-all">
+                                <i class="fas fa-search mr-1.5"></i> Semak Status ({{ $dup['no_rujukan'] }})
+                            </a>
+                            <a href="{{ route('public.verify_edit', $dup['no_rujukan']) }}" class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold text-slate-800 bg-amber-200 hover:bg-amber-300 transition-all">
+                                <i class="fas fa-edit mr-1.5"></i> Kemas Kini Maklumat (2FA)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         @if ($errors->any())
             <div class="p-4 bg-rose-50 border-b border-rose-200 text-rose-800 text-xs">
                 <div class="font-bold flex items-center mb-1">
@@ -101,10 +131,34 @@
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                         2. NO. KAD PENGENALAN <span class="text-rose-500">*</span>
                     </label>
-                    <input type="text" name="no_kp" value="{{ old('no_kp') }}" required maxlength="14" placeholder="Contoh: 850712-03-5411"
-                           class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm">
+                    <div class="relative">
+                        <input type="text" name="no_kp" x-model="noKp" @input.debounce.500ms="checkIc" @blur="checkIc" value="{{ old('no_kp') }}" required maxlength="14" placeholder="Contoh: 850712-03-5411"
+                               class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
+                               :class="{'border-amber-400 focus:ring-amber-400 bg-amber-50/40': duplicateInfo.exists}">
+                        <div x-show="isCheckingIc" x-cloak class="absolute right-3 top-3 text-slate-400 text-xs">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                    </div>
                     <span class="text-[11px] text-slate-400">12 digit tanpa simbol atau dengan sempang.</span>
                     @error('no_kp') <p class="text-rose-600 text-xs mt-1">{{ $message }}</p> @enderror
+
+                    <!-- Real-Time Duplicate Warning Card -->
+                    <div x-show="duplicateInfo.exists" x-cloak class="mt-2.5 p-3.5 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-950 space-y-2 animate-fadeIn">
+                        <div class="font-bold flex items-center text-amber-900">
+                            <i class="fas fa-exclamation-circle text-amber-600 mr-1.5 text-sm"></i> Rekod Permohonan Aktif Ditemui
+                        </div>
+                        <p class="text-[11px] leading-relaxed text-amber-800">
+                            No. KP ini telah mempunyai permohonan aktif: <strong class="font-mono text-emerald-800" x-text="duplicateInfo.no_rujukan"></strong> (<span x-text="duplicateInfo.nama"></span> - Status: <span class="font-semibold" x-text="duplicateInfo.status"></span>).
+                        </p>
+                        <div class="flex flex-wrap gap-2 pt-1">
+                            <a :href="duplicateInfo.check_url" class="px-3 py-1.5 rounded-lg bg-emerald-700 text-white font-bold text-[11px] hover:bg-emerald-800 inline-flex items-center">
+                                <i class="fas fa-search mr-1"></i> Semak Status
+                            </a>
+                            <a :href="duplicateInfo.edit_url" class="px-3 py-1.5 rounded-lg bg-amber-200 text-amber-900 font-bold text-[11px] hover:bg-amber-300 inline-flex items-center">
+                                <i class="fas fa-edit mr-1"></i> Kemas Kini (2FA)
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 3. No Telefon -->
@@ -597,7 +651,12 @@
             <a href="{{ route('public.home') }}" class="w-full sm:w-auto px-6 py-3.5 rounded-xl text-sm font-bold text-slate-600 bg-slate-200 hover:bg-slate-300 text-center transition-colors">
                 Batal
             </a>
-            <button type="submit" class="w-full sm:w-auto px-10 py-4 rounded-xl text-base font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-xl shadow-emerald-600/30 transition-all transform hover:-translate-y-0.5 flex items-center justify-center">
+            <template x-if="duplicateInfo.exists">
+                <a :href="duplicateInfo.check_url" class="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-bold text-white bg-amber-600 hover:bg-amber-700 shadow-lg shadow-amber-600/30 text-center transition-all flex items-center justify-center">
+                    <i class="fas fa-search mr-2"></i> LIHAT PERMOHONAN SEDIA ADA (<span x-text="duplicateInfo.no_rujukan"></span>)
+                </a>
+            </template>
+            <button x-show="!duplicateInfo.exists" type="submit" class="w-full sm:w-auto px-10 py-4 rounded-xl text-base font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-xl shadow-emerald-600/30 transition-all transform hover:-translate-y-0.5 flex items-center justify-center">
                 <i class="fas fa-paper-plane mr-2.5 text-lg"></i> HANTAR PERMOHONAN SEKARANG
             </button>
         </div>
@@ -616,6 +675,9 @@
 
     function applicationForm() {
         return {
+            noKp: '{{ old("no_kp", "") }}',
+            isCheckingIc: false,
+            duplicateInfo: { exists: false },
             gpsLat: '{{ old("gps_latitud", "6.1254") }}',
             gpsLng: '{{ old("gps_longitud", "102.2381") }}',
             stok: {
@@ -634,7 +696,28 @@
                 this.$nextTick(() => {
                     this.initMap();
                     this.initSignature();
+                    if (this.noKp && this.noKp.replace(/[^0-9]/g, '').length === 12) {
+                        this.checkIc();
+                    }
                 });
+            },
+
+            async checkIc() {
+                const clean = (this.noKp || '').replace(/[^0-9]/g, '');
+                if (clean.length === 12) {
+                    this.isCheckingIc = true;
+                    try {
+                        const res = await fetch('{{ route("public.check_ic") }}?no_kp=' + encodeURIComponent(clean));
+                        const data = await res.json();
+                        this.duplicateInfo = data;
+                    } catch (e) {
+                        console.error('Ralat semasa semakan No. KP:', e);
+                    } finally {
+                        this.isCheckingIc = false;
+                    }
+                } else {
+                    this.duplicateInfo = { exists: false };
+                }
             },
 
             initMap() {

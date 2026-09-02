@@ -99,12 +99,35 @@ class PublicApplicationController extends Controller
                 ->withInput();
         }
 
+        $cleanNoKp = preg_replace('/[^0-9]/', '', $request->no_kp);
+
+        // Semakan Sekatan: 1 Permohonan Aktif Sahaja Bagi Setiap No. KP
+        $existingActiveApp = Application::where('no_kp', $cleanNoKp)
+            ->where(function ($query) {
+                $query->whereNull('status_negeri')
+                      ->orWhere('status_negeri', '!=', 'Gagal');
+            })
+            ->latest()
+            ->first();
+
+        if ($existingActiveApp) {
+            return redirect()->back()
+                ->withInput()
+                ->with('duplicate_error', [
+                    'no_kp' => $request->no_kp,
+                    'no_rujukan' => $existingActiveApp->no_rujukan,
+                    'nama' => $existingActiveApp->nama,
+                    'status' => $existingActiveApp->status_permohonan ?: ($existingActiveApp->status_negeri ?: $existingActiveApp->syor_permohonan),
+                    'tarikh' => $existingActiveApp->tarikh_permohonan ? $existingActiveApp->tarikh_permohonan->format('d/m/Y') : $existingActiveApp->created_at->format('d/m/Y'),
+                ]);
+        }
+
         try {
             DB::beginTransaction();
 
             $application = Application::create([
                 'nama' => strtoupper(trim($request->nama)),
-                'no_kp' => preg_replace('/[^0-9]/', '', $request->no_kp),
+                'no_kp' => $cleanNoKp,
                 'no_telefon' => trim($request->no_telefon),
                 'alamat_tetap' => trim($request->alamat_tetap),
                 'poskod' => trim($request->poskod),
@@ -485,5 +508,40 @@ class PublicApplicationController extends Controller
         }
 
         return view('public.print', compact('application', 'inventories'));
+    }
+
+    /**
+     * API Semakan Masa Nyata No. KP (Real-Time IC Lookup)
+     */
+    public function checkExistingIc(Request $request)
+    {
+        $rawNoKp = $request->query('no_kp', '');
+        $cleanNoKp = preg_replace('/[^0-9]/', '', $rawNoKp);
+
+        if (strlen($cleanNoKp) < 12) {
+            return response()->json(['exists' => false]);
+        }
+
+        $existingActiveApp = Application::where('no_kp', $cleanNoKp)
+            ->where(function ($query) {
+                $query->whereNull('status_negeri')
+                      ->orWhere('status_negeri', '!=', 'Gagal');
+            })
+            ->latest()
+            ->first();
+
+        if ($existingActiveApp) {
+            return response()->json([
+                'exists' => true,
+                'no_rujukan' => $existingActiveApp->no_rujukan,
+                'nama' => $existingActiveApp->nama,
+                'status' => $existingActiveApp->status_permohonan ?: ($existingActiveApp->status_negeri ?: $existingActiveApp->syor_permohonan),
+                'tarikh' => $existingActiveApp->tarikh_permohonan ? $existingActiveApp->tarikh_permohonan->format('d/m/Y') : $existingActiveApp->created_at->format('d/m/Y'),
+                'check_url' => route('public.check_status') . '?no_rujukan=' . $existingActiveApp->no_rujukan,
+                'edit_url' => route('public.verify_edit', $existingActiveApp->no_rujukan),
+            ]);
+        }
+
+        return response()->json(['exists' => false]);
     }
 }

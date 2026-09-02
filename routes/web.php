@@ -20,6 +20,7 @@ Route::put('/permohonan/kemaskini/{no_rujukan}', [PublicApplicationController::c
 Route::get('/permohonan/berjaya/{no_rujukan}', [PublicApplicationController::class, 'success'])->name('public.success');
 Route::match(['get', 'post'], '/semakan', [PublicApplicationController::class, 'checkStatus'])->name('public.check_status');
 Route::get('/cetak/{no_rujukan}', [PublicApplicationController::class, 'printForm'])->name('public.print');
+Route::get('/api/semak-kp', [PublicApplicationController::class, 'checkExistingIc'])->name('public.check_ic');
 
 /*
 |--------------------------------------------------------------------------

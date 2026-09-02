@@ -594,5 +594,100 @@ class NaimbifApplicationTest extends TestCase
             'jawatan' => 'Ketua Pegawai Veterinar Jajahan',
         ]);
     }
+
+    public function test_duplicate_active_ic_submission_is_prevented()
+    {
+        $existing = $this->createTestApp(); // IC: 850712035411
+
+        $payload = [
+            'nama' => 'WAN MUHAMMAD AZLAN BIN WAN HASSAN',
+            'no_kp' => '850712-03-5411',
+            'no_telefon' => '019-9112233',
+            'alamat_tetap' => 'Kg. Padang Tembak, Pengkalan Chepa',
+            'poskod' => '16100',
+            'jajahan' => 'Kota Bharu',
+            'pengalaman_menternak' => 5,
+            'status_penternakan' => 'Sepenuh Masa',
+            'pernah_kursus' => '0',
+            'berminat_kursus_jpvnk' => '1',
+            'status_tanah' => 'Sendiri',
+            'keluasan_tanah' => 4.5,
+            'padang_ragut' => 'Ada',
+            'bilangan_pekerja' => 2,
+            'punca_ternakan' => 'Beli',
+            'kaedah_pembiakan' => 'Asli',
+            'pengakuan_benar' => '1',
+            'tarikh_permohonan' => date('Y-m-d'),
+            'stok' => [
+                'CHAROLAIS' => ['betina_anak' => 2, 'betina_dara' => 0, 'betina_induk' => 0, 'jantan_anak' => 0, 'jantan_pejantan' => 0]
+            ]
+        ];
+
+        $response = $this->post(route('public.store'), $payload);
+        $response->assertSessionHas('duplicate_error');
+
+        // Total applications with this IC should still be 1 (not duplicated)
+        $count = Application::where('no_kp', '850712035411')->count();
+        $this->assertEquals(1, $count);
+    }
+
+    public function test_applicant_with_failed_previous_application_can_reapply()
+    {
+        $failedApp = $this->createTestApp();
+        $failedApp->update([
+            'no_kp' => '990101039999',
+            'status_negeri' => 'Gagal',
+        ]);
+
+        $payload = [
+            'nama' => 'PENTERNAK BAHARU REAPPLY',
+            'no_kp' => '990101-03-9999',
+            'no_telefon' => '019-9998877',
+            'alamat_tetap' => 'Kg. Baru, Pasir Mas',
+            'poskod' => '17000',
+            'jajahan' => 'Pasir Mas',
+            'pengalaman_menternak' => 3,
+            'status_penternakan' => 'Sepenuh Masa',
+            'pernah_kursus' => '0',
+            'berminat_kursus_jpvnk' => '1',
+            'status_tanah' => 'Sendiri',
+            'keluasan_tanah' => 3.0,
+            'padang_ragut' => 'Ada',
+            'bilangan_pekerja' => 1,
+            'punca_ternakan' => 'Beli',
+            'kaedah_pembiakan' => 'Asli',
+            'pengakuan_benar' => '1',
+            'tarikh_permohonan' => date('Y-m-d'),
+            'stok' => [
+                'CHAROLAIS' => ['betina_anak' => 1, 'betina_dara' => 0, 'betina_induk' => 0, 'jantan_anak' => 0, 'jantan_pejantan' => 0]
+            ]
+        ];
+
+        $response = $this->post(route('public.store'), $payload);
+        $response->assertRedirect();
+        $response->assertSessionMissing('duplicate_error');
+
+        $this->assertEquals(2, Application::where('no_kp', '990101039999')->count());
+    }
+
+    public function test_real_time_ic_lookup_api()
+    {
+        $app = $this->createTestApp(); // IC: 850712035411
+
+        // 1. Existing IC returns exists: true
+        $response = $this->getJson(route('public.check_ic', ['no_kp' => '850712-03-5411']));
+        $response->assertStatus(200);
+        $response->assertJson([
+            'exists' => true,
+            'no_rujukan' => $app->no_rujukan,
+        ]);
+
+        // 2. Non-existing IC returns exists: false
+        $responseNon = $this->getJson(route('public.check_ic', ['no_kp' => '700101031111']));
+        $responseNon->assertStatus(200);
+        $responseNon->assertJson([
+            'exists' => false,
+        ]);
+    }
 }
 
