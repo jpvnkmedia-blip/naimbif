@@ -177,6 +177,11 @@ class Application extends Model
         return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-300"><i class="fas fa-clock mr-1"></i> Baru Dihantar</span>';
     }
 
+    public function isDisemakJajahan(): bool
+    {
+        return in_array(strtolower($this->syor_permohonan ?? ''), ['disokong', 'tidak disokong']) || !empty($this->tarikh_semakan_jajahan);
+    }
+
     public function getFormattedNoKpAttribute(): string
     {
         $clean = preg_replace('/[^0-9]/', '', $this->no_kp);

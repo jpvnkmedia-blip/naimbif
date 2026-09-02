@@ -412,68 +412,95 @@
 
             <!-- 6. BORANG KELULUSAN IBU PEJABAT (JPVNK) -->
             @if(Auth::user()->isPegawaiNegeri())
-                <div class="bg-white rounded-3xl p-6 border-2 border-blue-600/30 shadow-md space-y-4">
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-7 h-7 rounded-lg bg-blue-700 text-white flex items-center justify-center text-xs font-bold">
-                                <i class="fas fa-landmark"></i>
+                @if($application->isDisemakJajahan())
+                    <div class="bg-white rounded-3xl p-6 border-2 border-blue-600/30 shadow-md space-y-4">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-7 h-7 rounded-lg bg-blue-700 text-white flex items-center justify-center text-xs font-bold">
+                                    <i class="fas fa-landmark"></i>
+                                </div>
+                                <h3 class="text-sm font-bold text-blue-950 uppercase tracking-wider">Ulasan & Kelulusan Jabatan</h3>
                             </div>
-                            <h3 class="text-sm font-bold text-blue-950 uppercase tracking-wider">Ulasan & Kelulusan Jabatan</h3>
+                            <span class="text-[10px] uppercase font-bold px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
+                                Ibu Pejabat JPVNK
+                            </span>
                         </div>
-                        <span class="text-[10px] uppercase font-bold px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
-                            Ibu Pejabat JPVNK
-                        </span>
+
+                        <form action="{{ route('admin.applications.update_negeri', $application->id) }}" method="POST" class="space-y-4">
+                            @csrf
+
+                            <!-- Status Negeri -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">KEPUTUSAN KELULUSAN JABATAN <span class="text-rose-500">*</span></label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <label class="flex items-center p-2 border rounded-xl cursor-pointer hover:bg-slate-50 text-xs {{ old('status_negeri', $application->status_negeri) == 'Menunggu Kelulusan' ? 'border-blue-500 bg-blue-50' : 'border-slate-300' }}">
+                                        <input type="radio" name="status_negeri" value="Menunggu Kelulusan" {{ old('status_negeri', $application->status_negeri) == 'Menunggu Kelulusan' ? 'checked' : '' }} class="text-blue-600">
+                                        <span class="ml-1.5 font-semibold text-slate-800 text-[11px]">Menunggu</span>
+                                    </label>
+                                    <label class="flex items-center p-2 border rounded-xl cursor-pointer hover:bg-slate-50 text-xs {{ old('status_negeri', $application->status_negeri) == 'Lulus' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300' }}">
+                                        <input type="radio" name="status_negeri" value="Lulus" {{ old('status_negeri', $application->status_negeri) == 'Lulus' ? 'checked' : '' }} class="text-emerald-600">
+                                        <span class="ml-1.5 font-bold text-emerald-800 text-[11px]">LULUS</span>
+                                    </label>
+                                    <label class="flex items-center p-2 border rounded-xl cursor-pointer hover:bg-slate-50 text-xs {{ old('status_negeri', $application->status_negeri) == 'Gagal' ? 'border-rose-500 bg-rose-50' : 'border-slate-300' }}">
+                                        <input type="radio" name="status_negeri" value="Gagal" {{ old('status_negeri', $application->status_negeri) == 'Gagal' ? 'checked' : '' }} class="text-rose-600">
+                                        <span class="ml-1.5 font-bold text-rose-800 text-[11px]">GAGAL</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- No Rujukan Negeri -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">NO. RUJUKAN KELULUSAN RASMI</label>
+                                <input type="text" name="no_rujukan_negeri" value="{{ old('no_rujukan_negeri', $application->no_rujukan_negeri) }}"
+                                       placeholder="Biarkan kosong untuk auto-generate semasa Lulus"
+                                       class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 font-mono font-bold focus:ring-blue-500">
+                            </div>
+
+                            <!-- Pegawai Pelulus -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">PEGAWAI PELULUS <span class="text-rose-500">*</span></label>
+                                <input type="text" name="pegawai_pelulus" value="{{ old('pegawai_pelulus', $application->pegawai_pelulus ?: (Auth::user()->isPegawaiNegeri() ? Auth::user()->name : 'Dr. Ahmad Farhan bin Ismail')) }}" required
+                                       class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-blue-500">
+                            </div>
+
+                            <!-- Ulasan Negeri -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">ULASAN / SYARAT KELULUSAN JABATAN</label>
+                                <textarea name="ulasan_negeri" rows="3" placeholder="Ulasan rasmi mesyuarat jawatankuasa ladang bridlot..."
+                                          class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-blue-500">{{ old('ulasan_negeri', $application->ulasan_negeri) }}</textarea>
+                            </div>
+
+                            <button type="submit" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-blue-700 hover:bg-blue-800 transition-colors shadow-sm flex items-center justify-center">
+                                <i class="fas fa-stamp mr-1.5"></i> Kemas Kini Keputusan Jabatan
+                            </button>
+                        </form>
                     </div>
-
-                    <form action="{{ route('admin.applications.update_negeri', $application->id) }}" method="POST" class="space-y-4">
-                        @csrf
-
-                        <!-- Status Negeri -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">KEPUTUSAN KELULUSAN JABATAN <span class="text-rose-500">*</span></label>
-                            <div class="grid grid-cols-3 gap-2">
-                                <label class="flex items-center p-2 border rounded-xl cursor-pointer hover:bg-slate-50 text-xs {{ old('status_negeri', $application->status_negeri) == 'Menunggu Kelulusan' ? 'border-blue-500 bg-blue-50' : 'border-slate-300' }}">
-                                    <input type="radio" name="status_negeri" value="Menunggu Kelulusan" {{ old('status_negeri', $application->status_negeri) == 'Menunggu Kelulusan' ? 'checked' : '' }} class="text-blue-600">
-                                    <span class="ml-1.5 font-semibold text-slate-800 text-[11px]">Menunggu</span>
-                                </label>
-                                <label class="flex items-center p-2 border rounded-xl cursor-pointer hover:bg-slate-50 text-xs {{ old('status_negeri', $application->status_negeri) == 'Lulus' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300' }}">
-                                    <input type="radio" name="status_negeri" value="Lulus" {{ old('status_negeri', $application->status_negeri) == 'Lulus' ? 'checked' : '' }} class="text-emerald-600">
-                                    <span class="ml-1.5 font-bold text-emerald-800 text-[11px]">LULUS</span>
-                                </label>
-                                <label class="flex items-center p-2 border rounded-xl cursor-pointer hover:bg-slate-50 text-xs {{ old('status_negeri', $application->status_negeri) == 'Gagal' ? 'border-rose-500 bg-rose-50' : 'border-slate-300' }}">
-                                    <input type="radio" name="status_negeri" value="Gagal" {{ old('status_negeri', $application->status_negeri) == 'Gagal' ? 'checked' : '' }} class="text-rose-600">
-                                    <span class="ml-1.5 font-bold text-rose-800 text-[11px]">GAGAL</span>
-                                </label>
+                @else
+                    <!-- Notifikasi Menunggu Siasatan Pejabat Jajahan untuk Pegawai Negeri -->
+                    <div class="bg-white rounded-3xl p-6 border-2 border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                                <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Ulasan & Kelulusan Jabatan</h3>
                             </div>
+                            <span class="text-[10px] uppercase font-bold px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full">
+                                Menunggu Siasatan Jajahan
+                            </span>
                         </div>
 
-                        <!-- No Rujukan Negeri -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">NO. RUJUKAN KELULUSAN RASMI</label>
-                            <input type="text" name="no_rujukan_negeri" value="{{ old('no_rujukan_negeri', $application->no_rujukan_negeri) }}"
-                                   placeholder="Biarkan kosong untuk auto-generate semasa Lulus"
-                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 font-mono font-bold focus:ring-blue-500">
+                        <div class="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-950 space-y-2">
+                            <div class="flex items-center font-bold text-amber-900">
+                                <i class="fas fa-hourglass-half text-amber-600 mr-2 text-sm"></i>
+                                Tindakan Kelulusan Belum Dibuka
+                            </div>
+                            <p class="text-[11px] leading-relaxed text-amber-800">
+                                Pegawai Ibu Pejabat JPVNK (Negeri) hanya boleh membuat <strong>Ulasan & Kelulusan Jabatan</strong> selepas <strong>Pejabat Veterinar Jajahan {{ $application->jajahan_ladang ?: $application->jajahan }}</strong> selesai menjalankan siasatan premis dan menghantar perakuan syor (Disokong / Tidak Disokong).
+                            </p>
                         </div>
-
-                        <!-- Pegawai Pelulus -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">PEGAWAI PELULUS <span class="text-rose-500">*</span></label>
-                            <input type="text" name="pegawai_pelulus" value="{{ old('pegawai_pelulus', $application->pegawai_pelulus ?: (Auth::user()->isPegawaiNegeri() ? Auth::user()->name : 'Dr. Ahmad Farhan bin Ismail')) }}" required
-                                   class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-blue-500">
-                        </div>
-
-                        <!-- Ulasan Negeri -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">ULASAN / SYARAT KELULUSAN JABATAN</label>
-                            <textarea name="ulasan_negeri" rows="3" placeholder="Ulasan rasmi mesyuarat jawatankuasa ladang bridlot..."
-                                      class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-blue-500">{{ old('ulasan_negeri', $application->ulasan_negeri) }}</textarea>
-                        </div>
-
-                        <button type="submit" class="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-white bg-blue-700 hover:bg-blue-800 transition-colors shadow-sm flex items-center justify-center">
-                            <i class="fas fa-stamp mr-1.5"></i> Kemas Kini Keputusan Jabatan
-                        </button>
-                    </form>
-                </div>
+                    </div>
+                @endif
             @else
                 <!-- Paparan Status Sahaja untuk Pegawai Jajahan (Read-Only) -->
                 <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">

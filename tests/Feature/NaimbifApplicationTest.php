@@ -241,11 +241,46 @@ class NaimbifApplicationTest extends TestCase
         ]);
     }
 
-    public function test_state_officer_can_approve_application()
+    public function test_state_officer_cannot_approve_before_district_investigation()
+    {
+        $user = User::where('email', 'negeri@jpvnk.gov.my')->first();
+        $app = $this->createTestApp(); // Initial status: syor_permohonan is 'Belum Disemak'
+
+        // 1. Visit show page: approval form is locked / hidden, shows "Tindakan Kelulusan Belum Dibuka"
+        $showResponse = $this->actingAs($user)->get(route('admin.applications.show', $app->id));
+        $showResponse->assertStatus(200);
+        $showResponse->assertSee('Tindakan Kelulusan Belum Dibuka');
+        $showResponse->assertDontSee('Kemas Kini Keputusan Jabatan');
+
+        // 2. Direct POST is blocked with error message
+        $response = $this->actingAs($user)->post(route('admin.applications.update_negeri', $app->id), [
+            'status_negeri' => 'Lulus',
+            'no_rujukan_negeri' => 'JPVNK/BRIDLOT/2026/TEST01',
+            'pegawai_pelulus' => 'Dr. Ahmad Farhan bin Ismail',
+        ]);
+
+        $response->assertSessionHas('error');
+    }
+
+    public function test_state_officer_can_approve_after_district_investigation()
     {
         $user = User::where('email', 'negeri@jpvnk.gov.my')->first();
         $app = $this->createTestApp();
 
+        // Simulate district officer completing investigation
+        $app->update([
+            'syor_permohonan' => 'Disokong',
+            'status_kelengkapan' => 'Lengkap',
+            'tarikh_semakan_jajahan' => now(),
+            'pegawai_penyiasat' => 'En. Mohd Ridzuan bin Abdullah',
+        ]);
+
+        // 1. Visit show page: approval form is available
+        $showResponse = $this->actingAs($user)->get(route('admin.applications.show', $app->id));
+        $showResponse->assertStatus(200);
+        $showResponse->assertSee('Kemas Kini Keputusan Jabatan');
+
+        // 2. State officer submits approval
         $response = $this->actingAs($user)->post(route('admin.applications.update_negeri', $app->id), [
             'status_negeri' => 'Lulus',
             'no_rujukan_negeri' => 'JPVNK/BRIDLOT/2026/TEST01',
@@ -293,7 +328,7 @@ class NaimbifApplicationTest extends TestCase
         $showResponse->assertStatus(200);
         $showResponse->assertDontSee('Simpan Ulasan Jajahan');
         $showResponse->assertSee('Laporan Siasatan Jajahan');
-        $showResponse->assertSee('Kemas Kini Keputusan Jabatan');
+        $showResponse->assertSee('Tindakan Kelulusan Belum Dibuka');
 
         // 2. Direct POST to update_jajahan is blocked
         $postResponse = $this->actingAs($stateOfficer)->post(route('admin.applications.update_jajahan', $app->id), [

@@ -144,6 +144,11 @@ class ApplicationManagementController extends Controller
 
         $application = Application::findOrFail($id);
 
+        if (!$application->isDisemakJajahan()) {
+            return redirect()->back()
+                ->with('error', 'Tindakan Disekat: Pejabat Veterinar Jajahan (' . ($application->jajahan_ladang ?: $application->jajahan) . ') belum selesai membuat siasatan premis dan perakuan syor.');
+        }
+
         $request->validate([
             'status_negeri' => 'required|in:Lulus,Gagal,Menunggu Kelulusan',
             'no_rujukan_negeri' => 'nullable|string|max:100',
