@@ -190,4 +190,44 @@ class Application extends Model
         }
         return $this->no_kp;
     }
+
+    /**
+     * Scope tapisan permohonan mengikut peranan pengguna (Pegawai Jajahan vs Negeri/Admin)
+     */
+    public function scopeForUser($query, ?User $user = null)
+    {
+        $user = $user ?: \Illuminate\Support\Facades\Auth::user();
+        if ($user && $user->role === 'pegawai_jajahan' && !empty($user->jajahan)) {
+            return $query->where(function ($q) use ($user) {
+                $q->where('jajahan_ladang', $user->jajahan)
+                  ->orWhere(function ($sq) use ($user) {
+                      $sq->whereNull('jajahan_ladang')->where('jajahan', $user->jajahan);
+                  })
+                  ->orWhere('jajahan', $user->jajahan);
+            });
+        }
+        return $query;
+    }
+
+    /**
+     * Semak kebenaran akses permohonan oleh pengguna semasa
+     */
+    public function canBeAccessedBy(?User $user = null): bool
+    {
+        $user = $user ?: \Illuminate\Support\Facades\Auth::user();
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->isAdmin() || $user->isPegawaiNegeri()) {
+            return true;
+        }
+
+        if ($user->role === 'pegawai_jajahan' && !empty($user->jajahan)) {
+            $appJajahan = $this->jajahan_ladang ?: $this->jajahan;
+            return $appJajahan === $user->jajahan || $this->jajahan === $user->jajahan;
+        }
+
+        return false;
+    }
 }

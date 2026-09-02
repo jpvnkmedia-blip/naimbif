@@ -14,40 +14,44 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        // Base query depending on user's role
-        $query = Application::query();
-        if ($user->role === 'pegawai_jajahan' && !empty($user->jajahan)) {
-            // Optional: can filter or show all with highlight
-        }
+        // Base query filtered by user's assigned district if Pegawai Jajahan
+        $appQuery = Application::forUser($user);
 
-        $totalApplications = Application::count();
-        $pendingJajahan = Application::where('status_kelengkapan', 'Dalam Semakan')->count();
-        $pendingNegeri = Application::where('syor_permohonan', 'Disokong')
+        $totalApplications = (clone $appQuery)->count();
+        $pendingJajahan = (clone $appQuery)->where('status_kelengkapan', 'Dalam Semakan')->count();
+        $pendingNegeri = (clone $appQuery)->where('syor_permohonan', 'Disokong')
             ->where('status_negeri', 'Menunggu Kelulusan')
             ->count();
-        $approvedCount = Application::where('status_negeri', 'Lulus')->count();
-        $rejectedCount = Application::where('status_negeri', 'Gagal')
-            ->orWhere('syor_permohonan', 'Tidak Disokong')
-            ->count();
+        $approvedCount = (clone $appQuery)->where('status_negeri', 'Lulus')->count();
+        $rejectedCount = (clone $appQuery)->where(function ($q) {
+            $q->where('status_negeri', 'Gagal')
+              ->orWhere('syor_permohonan', 'Tidak Disokong');
+        })->count();
 
-        $totalLivestock = (int) LivestockInventory::sum('jumlah_baka');
-        $totalFemale = (int) LivestockInventory::sum(DB::raw('betina_anak + betina_dara + betina_induk'));
-        $totalMale = (int) LivestockInventory::sum(DB::raw('jantan_anak + jantan_pejantan'));
+        // Scope livestock statistics to user's assigned applications
+        $appIds = (clone $appQuery)->pluck('id');
+
+        $totalLivestock = (int) LivestockInventory::whereIn('application_id', $appIds)->sum('jumlah_baka');
+        $totalFemale = (int) LivestockInventory::whereIn('application_id', $appIds)
+            ->sum(DB::raw('betina_anak + betina_dara + betina_induk'));
+        $totalMale = (int) LivestockInventory::whereIn('application_id', $appIds)
+            ->sum(DB::raw('jantan_anak + jantan_pejantan'));
 
         // Breeds breakdown
-        $breedStats = LivestockInventory::select('baka', DB::raw('SUM(jumlah_baka) as total'))
+        $breedStats = LivestockInventory::whereIn('application_id', $appIds)
+            ->select('baka', DB::raw('SUM(jumlah_baka) as total'))
             ->groupBy('baka')
             ->pluck('total', 'baka')
             ->toArray();
 
-        // Jajahan breakdown
-        $jajahanStats = Application::select('jajahan', DB::raw('COUNT(*) as total'))
-            ->groupBy('jajahan')
-            ->pluck('total', 'jajahan')
+        // Jajahan breakdown (or status breakdown for specific district)
+        $jajahanStats = (clone $appQuery)->select(DB::raw('COALESCE(jajahan_ladang, jajahan) as jajahan_nama'), DB::raw('COUNT(*) as total'))
+            ->groupBy('jajahan_nama')
+            ->pluck('total', 'jajahan_nama')
             ->toArray();
 
         // Recent applications
-        $recentApplications = Application::with('livestockInventories')
+        $recentApplications = (clone $appQuery)->with('livestockInventories')
             ->latest()
             ->take(6)
             ->get();

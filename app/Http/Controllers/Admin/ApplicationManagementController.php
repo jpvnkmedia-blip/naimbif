@@ -17,7 +17,7 @@ class ApplicationManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Application::with(['livestockInventories', 'disemakOleh', 'diluluskanOleh']);
+        $query = Application::forUser()->with(['livestockInventories', 'disemakOleh', 'diluluskanOleh']);
 
         // Filter: Carian teks
         if ($request->filled('q')) {
@@ -33,7 +33,10 @@ class ApplicationManagementController extends Controller
 
         // Filter: Jajahan
         if ($request->filled('jajahan')) {
-            $query->where('jajahan', $request->jajahan);
+            $query->where(function ($q) use ($request) {
+                $q->where('jajahan_ladang', $request->jajahan)
+                  ->orWhere('jajahan', $request->jajahan);
+            });
         }
 
         // Filter: Status Kelengkapan / Negeri
@@ -74,6 +77,11 @@ class ApplicationManagementController extends Controller
         $application = Application::with(['livestockInventories', 'disemakOleh', 'diluluskanOleh'])
             ->findOrFail($id);
 
+        if (!$application->canBeAccessedBy(Auth::user())) {
+            return redirect()->route('admin.applications.index')
+                ->with('error', 'Akses Disekat: Anda hanya mempunyai kebenaran untuk mengakses maklumat pemohon di Jajahan ' . Auth::user()->jajahan . ' sahaja.');
+        }
+
         $inventories = [];
         foreach ($application->livestockInventories as $inv) {
             $inventories[$inv->baka] = $inv;
@@ -93,6 +101,11 @@ class ApplicationManagementController extends Controller
         }
 
         $application = Application::findOrFail($id);
+
+        if (!$application->canBeAccessedBy(Auth::user())) {
+            return redirect()->route('admin.applications.index')
+                ->with('error', 'Akses Disekat: Anda hanya mempunyai kebenaran untuk mengurus maklumat pemohon di Jajahan ' . Auth::user()->jajahan . ' sahaja.');
+        }
 
         $request->validate([
             'id_premis' => 'nullable|string|max:100',
@@ -197,6 +210,12 @@ class ApplicationManagementController extends Controller
     public function destroy($id)
     {
         $application = Application::findOrFail($id);
+
+        if (!$application->canBeAccessedBy(Auth::user())) {
+            return redirect()->route('admin.applications.index')
+                ->with('error', 'Akses Disekat: Anda hanya mempunyai kebenaran untuk memadam rekod di Jajahan ' . Auth::user()->jajahan . ' sahaja.');
+        }
+
         $application->delete();
 
         return redirect()->route('admin.applications.index')
@@ -208,10 +227,13 @@ class ApplicationManagementController extends Controller
      */
     public function exportCsv(Request $request)
     {
-        $query = Application::with('livestockInventories');
+        $query = Application::forUser()->with('livestockInventories');
 
         if ($request->filled('jajahan')) {
-            $query->where('jajahan', $request->jajahan);
+            $query->where(function ($q) use ($request) {
+                $q->where('jajahan_ladang', $request->jajahan)
+                  ->orWhere('jajahan', $request->jajahan);
+            });
         }
 
         if ($request->filled('status')) {

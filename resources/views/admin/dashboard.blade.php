@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Dashboard Utama')
-@section('page-title', 'Dashboard Analitik NAIMbif')
+@section('title', Auth::user()->role === 'pegawai_jajahan' ? 'Dashboard JPV ' . Auth::user()->jajahan : 'Dashboard Utama')
+@section('page-title', Auth::user()->role === 'pegawai_jajahan' ? 'Dashboard Analitik NAIMbif (Pejabat JPV Jajahan ' . Auth::user()->jajahan . ')' : 'Dashboard Analitik NAIMbif')
 
 @section('content')
 <div class="space-y-6">
@@ -11,7 +11,7 @@
         <!-- 1. Total Applications -->
         <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Semua Permohonan</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">{{ Auth::user()->role === 'pegawai_jajahan' ? 'Permohonan ' . Auth::user()->jajahan : 'Semua Permohonan' }}</span>
                 <div class="text-2xl font-black text-slate-800 mt-1">{{ $totalApplications }}</div>
                 <div class="text-[11px] text-slate-500 mt-0.5">Jumlah borang diterima</div>
             </div>
@@ -76,7 +76,7 @@
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Taburan Baka Ternakan</h3>
-                    <p class="text-xs text-slate-500">Pecahan populasi mengikut baka lembu</p>
+                    <p class="text-xs text-slate-500">{{ Auth::user()->role === 'pegawai_jajahan' ? 'Pecahan populasi ternakan di Jajahan ' . Auth::user()->jajahan : 'Pecahan populasi mengikut baka lembu' }}</p>
                 </div>
                 <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg">Stok Semasa</span>
             </div>
@@ -89,8 +89,8 @@
         <div class="lg:col-span-7 bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Permohonan Mengikut Jajahan</h3>
-                    <p class="text-xs text-slate-500">Bilangan penyertaan penternak di Negeri Kelantan</p>
+                    <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">{{ Auth::user()->role === 'pegawai_jajahan' ? 'Statistik Permohonan Jajahan ' . Auth::user()->jajahan : 'Permohonan Mengikut Jajahan' }}</h3>
+                    <p class="text-xs text-slate-500">{{ Auth::user()->role === 'pegawai_jajahan' ? 'Jumlah permohonan berdaftar di Pejabat JPV Jajahan ' . Auth::user()->jajahan : 'Bilangan penyertaan penternak di Negeri Kelantan' }}</p>
                 </div>
                 <a href="{{ route('admin.applications.index') }}" class="text-xs font-bold text-emerald-600 hover:text-emerald-700">
                     Lihat Semua <i class="fas fa-arrow-right ml-1"></i>
@@ -107,7 +107,7 @@
         <div class="p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
                 <h3 class="text-base font-bold text-slate-900">Permohonan Terkini</h3>
-                <p class="text-xs text-slate-500">Senarai 6 permohonan terkini yang dihantar ke dalam sistem</p>
+                <p class="text-xs text-slate-500">{{ Auth::user()->role === 'pegawai_jajahan' ? 'Senarai 6 permohonan terkini di Jajahan ' . Auth::user()->jajahan : 'Senarai 6 permohonan terkini yang dihantar ke dalam sistem' }}</p>
             </div>
             <a href="{{ route('admin.applications.index') }}" class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors">
                 <i class="fas fa-list mr-1.5"></i> Buka Modul Permohonan

@@ -787,5 +787,70 @@ class NaimbifApplicationTest extends TestCase
             'exists' => false,
         ]);
     }
+
+    public function test_district_officer_can_only_see_and_manage_applications_in_own_district()
+    {
+        $kbOfficer = User::where('email', 'kb@jpvnk.gov.my')->first(); // Jajahan: Kota Bharu
+
+        $kbApp = $this->createTestApp(); // Jajahan: Kota Bharu
+        $pmApp = $this->createTestApp([
+            'no_rujukan' => 'NB-2026-9999',
+            'no_kp' => '880101038888',
+            'nama' => 'PENTERNAK PASIR MAS',
+            'jajahan' => 'Pasir Mas',
+            'jajahan_ladang' => 'Pasir Mas',
+        ]);
+
+        // 1. KB officer on index only sees KB application, NOT Pasir Mas
+        $response = $this->actingAs($kbOfficer)->get(route('admin.applications.index'));
+        $response->assertStatus(200);
+        $response->assertSee($kbApp->no_rujukan);
+        $response->assertDontSee($pmApp->no_rujukan);
+
+        // 2. KB officer can view KB application detail
+        $showKbResponse = $this->actingAs($kbOfficer)->get(route('admin.applications.show', $kbApp->id));
+        $showKbResponse->assertStatus(200);
+
+        // 3. KB officer trying to view Pasir Mas application is BLOCKED
+        $showPmResponse = $this->actingAs($kbOfficer)->get(route('admin.applications.show', $pmApp->id));
+        $showPmResponse->assertRedirect(route('admin.applications.index'));
+        $showPmResponse->assertSessionHas('error');
+
+        // 4. KB officer trying to update Pasir Mas application is BLOCKED
+        $updatePmResponse = $this->actingAs($kbOfficer)->post(route('admin.applications.update_jajahan', $pmApp->id), [
+            'id_premis' => 'PM-12345',
+            'status_kelengkapan' => 'Lengkap',
+            'syor_permohonan' => 'Disokong',
+            'pegawai_penyiasat' => 'En. Ridzuan',
+        ]);
+        $updatePmResponse->assertRedirect(route('admin.applications.index'));
+        $updatePmResponse->assertSessionHas('error');
+
+        // 5. Admin can see both applications
+        $admin = User::where('email', 'admin@jpvnk.gov.my')->first();
+        $adminResponse = $this->actingAs($admin)->get(route('admin.applications.index'));
+        $adminResponse->assertSee($kbApp->no_rujukan);
+        $adminResponse->assertSee($pmApp->no_rujukan);
+    }
+
+    public function test_district_officer_dashboard_is_scoped_to_district()
+    {
+        $kbOfficer = User::where('email', 'kb@jpvnk.gov.my')->first(); // Kota Bharu
+
+        $kbApp = $this->createTestApp(); // Kota Bharu
+        $pmApp = $this->createTestApp([
+            'no_rujukan' => 'NB-2026-8888',
+            'no_kp' => '880101037777',
+            'nama' => 'PENTERNAK PASIR MAS 2',
+            'jajahan' => 'Pasir Mas',
+            'jajahan_ladang' => 'Pasir Mas',
+        ]);
+
+        $response = $this->actingAs($kbOfficer)->get(route('admin.dashboard'));
+        $response->assertStatus(200);
+        $response->assertSee('Pejabat JPV Jajahan Kota Bharu');
+        $response->assertSee($kbApp->no_rujukan);
+        $response->assertDontSee($pmApp->no_rujukan);
+    }
 }
 

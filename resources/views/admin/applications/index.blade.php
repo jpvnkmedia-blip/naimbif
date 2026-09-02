@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Senarai Permohonan')
-@section('page-title', 'Pengurusan Permohonan Ladang Bridlot')
+@section('title', Auth::user()->role === 'pegawai_jajahan' ? 'Permohonan JPV ' . Auth::user()->jajahan : 'Senarai Permohonan')
+@section('page-title', Auth::user()->role === 'pegawai_jajahan' ? 'Pengurusan Permohonan Ladang Bridlot (Pejabat JPV Jajahan ' . Auth::user()->jajahan . ')' : 'Pengurusan Permohonan Ladang Bridlot')
 
 @section('content')
 <div class="space-y-6">
@@ -22,12 +22,17 @@
             <!-- Jajahan Filter -->
             <div>
                 <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">Jajahan</label>
-                <select name="jajahan" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-emerald-500">
-                    <option value="">-- Semua Jajahan --</option>
-                    @foreach($jajahans as $j)
-                        <option value="{{ $j }}" {{ request('jajahan') == $j ? 'selected' : '' }}>{{ $j }}</option>
-                    @endforeach
-                </select>
+                @if(Auth::user()->role === 'pegawai_jajahan')
+                    <input type="text" value="Jajahan {{ Auth::user()->jajahan }}" readonly
+                           class="w-full px-3 py-2 text-xs rounded-xl border border-emerald-300 bg-emerald-50 font-bold text-emerald-800 cursor-not-allowed">
+                @else
+                    <select name="jajahan" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:ring-emerald-500">
+                        <option value="">-- Semua Jajahan --</option>
+                        @foreach($jajahans as $j)
+                            <option value="{{ $j }}" {{ request('jajahan') == $j ? 'selected' : '' }}>{{ $j }}</option>
+                        @endforeach
+                    </select>
+                @endif
             </div>
 
             <!-- Status Filter -->
