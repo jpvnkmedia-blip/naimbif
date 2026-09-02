@@ -310,13 +310,7 @@ class PublicApplicationController extends Controller
             ->where('no_rujukan', $no_rujukan)
             ->firstOrFail();
 
-        // Semak jika permohonan sudah diluluskan
-        if ($application->status_negeri === 'Lulus') {
-            return redirect()->route('public.check_status', ['carian' => $application->no_rujukan])
-                ->with('error', 'Permohonan ini telah diluluskan rasmi oleh Jabatan dan tidak boleh dikemas kini secara dalam talian. Sila hubungi Pejabat Veterinar Jajahan jika terdapat pindaan.');
-        }
-
-        // KESELAMATAN: Semak sama ada pemohon telah lulus pengesahan identiti (No. KP)
+        // KESELAMATAN: Semak sama ada pemohon telah lulus pengesahan identiti (No. KP + No. Telefon)
         $verifiedIc = session("verified_applicant_{$application->no_rujukan}");
         if ($verifiedIc !== $application->no_kp) {
             return view('public.verify_edit', compact('application'));
@@ -339,11 +333,6 @@ class PublicApplicationController extends Controller
     public function update(Request $request, $no_rujukan)
     {
         $application = Application::where('no_rujukan', $no_rujukan)->firstOrFail();
-
-        if ($application->status_negeri === 'Lulus') {
-            return redirect()->route('public.check_status', ['carian' => $application->no_rujukan])
-                ->with('error', 'Permohonan ini telah diluluskan rasmi oleh Jabatan dan tidak boleh dikemas kini.');
-        }
 
         // KESELAMATAN: Pastikan No KP sepadan dan sesi sah
         $verifiedIc = session("verified_applicant_{$application->no_rujukan}");

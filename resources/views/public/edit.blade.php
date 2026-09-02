@@ -52,6 +52,18 @@
             </div>
         </div>
 
+        @if($application->status_negeri === 'Lulus')
+            <div class="p-4 bg-emerald-50 border-b border-emerald-200 text-emerald-900 text-xs flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-emerald-200 text-emerald-800 flex items-center justify-center text-sm flex-shrink-0">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div>
+                    <div class="font-bold">Permohonan Ini Telah Diluluskan Rasmi (No. Rujukan Kelulusan: <span class="font-mono text-emerald-950 font-extrabold">{{ $application->no_rujukan_negeri ?: $application->no_rujukan }}</span>)</div>
+                    <div class="text-[11px] text-emerald-700 mt-0.5">Anda dibenarkan mengemas kini data penternak, ladang, atau matriks bilangan lembu semasa. Status kelulusan rasmi akan kekal terpelihara.</div>
+                </div>
+            </div>
+        @endif
+
         @if ($errors->any())
             <div class="p-4 bg-rose-50 border-b border-rose-200 text-rose-800 text-xs">
                 <div class="font-bold flex items-center mb-1">

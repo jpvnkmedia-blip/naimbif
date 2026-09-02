@@ -463,14 +463,55 @@ class NaimbifApplicationTest extends TestCase
         ]);
     }
 
-    public function test_approved_application_cannot_be_edited()
+    public function test_approved_application_can_be_edited_by_applicant()
     {
         $app = $this->createTestApp();
-        $app->update(['status_negeri' => 'Lulus']);
+        $app->update([
+            'status_negeri' => 'Lulus',
+            'no_rujukan_negeri' => 'JPVNK/L/2026/001',
+        ]);
 
+        // 1. Can view edit form
         $response = $this->withSession(["verified_applicant_{$app->no_rujukan}" => $app->no_kp])
             ->get(route('public.edit', $app->no_rujukan));
-        $response->assertRedirect(route('public.check_status', ['carian' => $app->no_rujukan]));
+        $response->assertStatus(200);
+        $response->assertSee('Permohonan Ini Telah Diluluskan Rasmi');
+
+        // 2. Can submit update to approved application
+        $updatePayload = [
+            'nama' => 'NIK MOHD AZLAN (PENTERNAK LULUS)',
+            'no_kp' => $app->no_kp,
+            'no_telefon' => '019-9112233',
+            'alamat_tetap' => 'PT 123 Kg Baru',
+            'poskod' => '16100',
+            'jajahan' => 'Kota Bharu',
+            'pengalaman_menternak' => 10,
+            'status_penternakan' => 'Sepenuh Masa',
+            'pernah_kursus' => '0',
+            'berminat_kursus_jpvnk' => '1',
+            'status_tanah' => 'Sendiri',
+            'keluasan_tanah' => 8.0,
+            'padang_ragut' => 'Ada',
+            'bilangan_pekerja' => 4,
+            'punca_ternakan' => 'Beli',
+            'kaedah_pembiakan' => 'Asli',
+            'stok' => [
+                'CHAROLAIS' => ['betina_anak' => 5, 'betina_dara' => 2, 'betina_induk' => 3, 'jantan_anak' => 1, 'jantan_pejantan' => 1],
+            ],
+        ];
+
+        $updateResponse = $this->withSession(["verified_applicant_{$app->no_rujukan}" => $app->no_kp])
+            ->put(route('public.update', $app->no_rujukan), $updatePayload);
+
+        $updateResponse->assertRedirect(route('public.check_status', ['carian' => $app->no_rujukan]));
+
+        $this->assertDatabaseHas('applications', [
+            'id' => $app->id,
+            'nama' => 'NIK MOHD AZLAN (PENTERNAK LULUS)',
+            'keluasan_tanah' => 8.0,
+            'status_negeri' => 'Lulus',
+            'no_rujukan_negeri' => 'JPVNK/L/2026/001',
+        ]);
     }
 
     public function test_submitting_application_creates_system_notification()
