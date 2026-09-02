@@ -76,7 +76,7 @@
                             <a href="{{ route('public.check_status') }}?carian={{ $dup['no_rujukan'] }}" class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 shadow-sm transition-all">
                                 <i class="fas fa-search mr-1.5"></i> Semak Status ({{ $dup['no_rujukan'] }})
                             </a>
-                            <a href="{{ route('public.verify_edit', $dup['no_rujukan']) }}" class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold text-slate-800 bg-amber-200 hover:bg-amber-300 transition-all">
+                            <a href="{{ route('public.edit', $dup['no_rujukan']) }}" class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold text-slate-800 bg-amber-200 hover:bg-amber-300 transition-all">
                                 <i class="fas fa-edit mr-1.5"></i> Kemas Kini Maklumat (2FA)
                             </a>
                         </div>

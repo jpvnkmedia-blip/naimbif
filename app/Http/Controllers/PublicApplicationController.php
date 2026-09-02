@@ -259,6 +259,10 @@ class PublicApplicationController extends Controller
     {
         $application = Application::where('no_rujukan', $no_rujukan)->firstOrFail();
 
+        if ($request->isMethod('get')) {
+            return redirect()->route('public.edit', $no_rujukan);
+        }
+
         $request->validate([
             'no_kp' => 'required|string',
             'no_telefon' => 'required|string',
@@ -537,8 +541,8 @@ class PublicApplicationController extends Controller
                 'nama' => $existingActiveApp->nama,
                 'status' => $existingActiveApp->status_permohonan ?: ($existingActiveApp->status_negeri ?: $existingActiveApp->syor_permohonan),
                 'tarikh' => $existingActiveApp->tarikh_permohonan ? $existingActiveApp->tarikh_permohonan->format('d/m/Y') : $existingActiveApp->created_at->format('d/m/Y'),
-                'check_url' => route('public.check_status') . '?no_rujukan=' . $existingActiveApp->no_rujukan,
-                'edit_url' => route('public.verify_edit', $existingActiveApp->no_rujukan),
+                'check_url' => route('public.check_status', ['carian' => $existingActiveApp->no_rujukan]),
+                'edit_url' => route('public.edit', $existingActiveApp->no_rujukan),
             ]);
         }
 

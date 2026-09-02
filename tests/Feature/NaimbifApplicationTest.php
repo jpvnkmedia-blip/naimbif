@@ -397,6 +397,10 @@ class NaimbifApplicationTest extends TestCase
         $editFormResponse->assertStatus(200);
         $editFormResponse->assertSee('SIMPAN PERUBAHAN PERMOHONAN');
         $editFormResponse->assertSee($app->nama);
+
+        // 7. Direct GET request on verify_edit route does not throw 405, but redirects gracefully
+        $directGetResponse = $this->get(route('public.verify_edit', $app->no_rujukan));
+        $directGetResponse->assertRedirect(route('public.edit', $app->no_rujukan));
     }
 
     public function test_applicant_can_update_application_data()
